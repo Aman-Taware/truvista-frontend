@@ -448,7 +448,8 @@ const BookingsPage = () => {
     }
     
     setSelectedBooking(booking);
-    setUpdatedVisitDate(booking.visitDate ? new Date(booking.visitDate) : null);
+    // Format date string from the booking object for date input
+    setUpdatedVisitDate(booking.visitDate ? booking.visitDate.split('T')[0] : null);
     setUpdatedStatus(booking.status);
     setIsModalOpen(true);
   };
@@ -469,12 +470,14 @@ const BookingsPage = () => {
       // Prepare update data
       const updateData = {
         id: selectedBooking.id,
-        visitDate: updatedVisitDate ? updatedVisitDate.toISOString().split('T')[0] : null,
+        visitDate: updatedVisitDate, // Send the date string directly as YYYY-MM-DD
         status: updatedStatus
       };
       
-      // Update booking
-      await updateBookingStatus(selectedBooking.id, updatedStatus);
+      console.log('Sending booking update data:', updateData);
+      
+      // Make API call to update booking with both status and visit date
+      await adminApi.updateBooking(selectedBooking.id, updateData);
       
       // Close modal and refresh bookings
       closeBookingModal();

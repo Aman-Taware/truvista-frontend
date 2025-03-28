@@ -14,29 +14,11 @@ const api = axios.create({
 });
 
 /**
- * Get authentication token from localStorage with expiration check
- * @returns {string|null} The authentication token or null if no valid token exists
+ * Get authentication token from localStorage
+ * @returns {string|null} The authentication token or null if not found
  */
 const getAuthToken = () => {
-  const token = localStorage.getItem('auth_token');
-  const expiry = localStorage.getItem('token_expiry');
-  
-  // Check if token exists
-  if (!token) return null;
-  
-  // Check if token is expired
-  if (expiry) {
-    const isExpired = new Date() > new Date(expiry);
-    if (isExpired) {
-      // Clear expired token
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('token_expiry');
-      localStorage.removeItem('user_data');
-      return null;
-    }
-  }
-  
-  return token;
+  return localStorage.getItem('auth_token');
 };
 
 // Add a request interceptor to add the auth token to requests
@@ -91,7 +73,6 @@ api.interceptors.response.use(
         
         // Clear auth state
         localStorage.removeItem('auth_token');
-        localStorage.removeItem('token_expiry');
         localStorage.removeItem('user_data');
         
         // Dispatch event for unauthorized to show login modal

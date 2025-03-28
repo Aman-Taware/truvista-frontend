@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropertyList from '../components/property/PropertyList';
 import Button from '../components/ui/Button';
@@ -24,6 +24,7 @@ const Home = () => {
   
   const [featuredProperties, setFeaturedProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -41,23 +42,23 @@ const Home = () => {
   // Add chatbot state
   const [showChatBot, setShowChatBot] = useState(true);
 
-  // Handle search param change
-  const handleSearchParamChange = (param, value) => {
+  // Memoize handlers to prevent recreating them on each render
+  const handleSearchParamChange = useCallback((param, value) => {
     setSearchParams(prev => ({
       ...prev,
       [param]: value
     }));
-  };
+  }, []);
 
   // Handle location selection
-  const handleLocationSelect = (location) => {
+  const handleLocationSelect = useCallback((location) => {
     setSelectedLocation(location);
     handleSearchParamChange('location', location);
     setShowLocationModal(false);
-  };
+  }, [handleSearchParamChange]);
 
   // Handle search click with auth check
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     if (!user) {
       showNotification({ 
         type: 'error', 
@@ -70,11 +71,16 @@ const Home = () => {
       return;
     }
     
-    navigate(`/properties${searchParams.location ? `?location=${searchParams.location}` : ''}`);
-  };
+    // Add scrollToTop=true parameter to ensure the page scrolls to top
+    const queryParams = new URLSearchParams();
+    if (searchParams.location) queryParams.set('location', searchParams.location);
+    queryParams.set('scrollToTop', 'true');
+    
+    navigate(`/properties?${queryParams.toString()}`);
+  }, [user, searchParams.location, navigate, showNotification]);
 
   // Handle property card click
-  const handlePropertyClick = (propertyId) => {
+  const handlePropertyClick = useCallback((propertyId) => {
     if (!user) {
       showNotification({ 
         type: 'error', 
@@ -88,38 +94,52 @@ const Home = () => {
     }
     
     navigate(`/properties/${propertyId}`);
-  };
+  }, [user, navigate, showNotification]);
 
   // Handle auth modal close
-  const handleAuthModalClose = () => {
+  const handleAuthModalClose = useCallback(() => {
     setShowAuthModal(false);
     // If user is now authenticated and there was a pending action, execute it
     if (user && pendingAction) {
       pendingAction();
       setPendingAction(null);
     }
-  };
+  }, [user, pendingAction]);
 
-  // Handle chatbot search
-  const handleChatbotSearch = (filters) => {
-    const params = new URLSearchParams();
-    
-    // Add all non-empty filters to URL params
-    if (filters.location) params.set('location', filters.location);
-    if (filters.flatType) params.set('flatType', filters.flatType.replace(/\s+/g, ''));
-    if (filters.minPrice) params.set('priceRange', `${filters.minPrice}-${filters.maxPrice || ''}`);
-    
-    // Navigate to properties page with filters
-    navigate(`/properties?${params.toString()}`);
-  };
-
-  // Close chatbot
-  const handleCloseChatBot = () => {
-    setShowChatBot(false);
-  };
-
-  // Fetch properties and stats
+  // Preload the hero image on component mount
   useEffect(() => {
+    // Preload the hero background image as soon as possible
+    const preloadImage = () => {
+      const img = new Image();
+      img.src = '/images/hero-background.jpg';
+      img.onload = () => {
+        setImageLoaded(true);
+      };
+      
+      // Set a timeout as a fallback
+      const timer = setTimeout(() => {
+        setImageLoaded(true);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    };
+    
+    preloadImage();
+    
+    // Add a link tag for browser preloading
+    if (!document.querySelector('link[rel="preload"][href="/images/hero-background.jpg"]')) {
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'preload';
+      preloadLink.href = '/images/hero-background.jpg';
+      preloadLink.as = 'image';
+      document.head.appendChild(preloadLink);
+    }
+  }, []);
+
+  // Fetch data only once on component mount
+  useEffect(() => {
+    let isMounted = true;
+    
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -131,6 +151,9 @@ const Home = () => {
         // Process response data using the extractData helper
         const featuredData = propertyApi.extractData(featuredResponse);
         console.log('Extracted featured data:', featuredData);
+        
+        // Only update state if component is still mounted
+        if (!isMounted) return;
         
         // Check if featuredData is null, undefined, or empty
         if (!featuredData) {
@@ -156,20 +179,16 @@ const Home = () => {
               workDone: property.workDone || null,
               status: property.status || null
             };
-            console.log('Processed property:', processed);
             return processed;
           });
           
           setFeaturedProperties(processedProperties);
         } else {
           console.log('Unexpected data structure for featured properties:', featuredData);
-          // If we receive an object instead of an array, try to adapt it
           if (featuredData && typeof featuredData === 'object') {
-            // If it's a single property object, wrap it in an array
             if (featuredData.id) {
               setFeaturedProperties([featuredData]);
             } else {
-              // Check if it might be an object with property items inside
               const possibleArray = Object.values(featuredData).filter(item => item && typeof item === 'object');
               if (possibleArray.length > 0) {
                 setFeaturedProperties(possibleArray);
@@ -181,116 +200,139 @@ const Home = () => {
             setFeaturedProperties([]);
           }
         }
-        
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching featured properties:', error);
-        setFeaturedProperties([]);
-        setLoading(false);
+        if (isMounted) {
+          setFeaturedProperties([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     
     fetchData();
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Hero Section Component with Search
-  const HeroSection = () => (
-    <section className="relative h-[90vh] overflow-hidden">
-      {/* Background image with parallax effect */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center transition-transform will-change-transform hero-background"
-        style={{ 
-          backgroundImage: 'url(https://images.unsplash.com/photo-1600210492493-0946911123ea?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80)', 
-          backgroundPosition: 'center 30%',
-          transform: 'translateY(0) scale(1.1)'
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-800/80 to-primary-800/30"></div>
-      </div>
-
-      <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
-        <div className="max-w-2xl animate-fadeIn">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 font-display">
-            Discover Your <span className="text-secondary-400">Dream Home</span> in Pune
-          </h1>
-          <p className="text-xl text-white/90 mb-8">
-            Explore our curated selection of premium properties with modern amenities and exceptional value.
-          </p>
-          
-          <div className="bg-white rounded-lg shadow-elegant overflow-hidden animate-slideUp">
-            <div className="p-4 flex flex-col sm:flex-row gap-4">
-              <button 
-                onClick={() => setShowLocationModal(true)}
-                className="flex-1 flex items-center bg-neutral-50 rounded-lg px-4 py-3 text-left border border-neutral-100 hover:border-primary-300 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="text-neutral-700 font-medium">
-                  {searchParams.location ? searchParams.location : 'Select Your Location'}
-                </span>
-              </button>
-              
-              <button
-                onClick={handleSearch}
-                className="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-6 py-3 font-medium transition-colors shadow-md"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Search Properties
-              </button>
+  // Hero Section Component with Search - Memoized to prevent unnecessary re-renders
+  const HeroSection = useMemo(() => {
+    return () => (
+      <section className="relative h-[90vh] overflow-hidden">
+        {/* Loading placeholder */}
+        <div 
+          className={`absolute inset-0 bg-gradient-to-b from-primary-700 to-primary-900 transition-opacity duration-700 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}
+          style={{ zIndex: imageLoaded ? -10 : 5 }}
+        >
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-primary-300 border-t-white rounded-full animate-spin mx-auto mb-6"></div>
+              <p className="text-white text-lg font-display">Loading amazing properties...</p>
             </div>
           </div>
-          
-          {locationStats && (
-            <div className="mt-8 flex flex-wrap gap-6 text-white animate-fadeIn delay-300">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{locationStats?.total || '250'}+</p>
-                  <p className="text-sm text-white/70">Properties</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        </div>
+
+        {/* Background image with proper loading */}
+        <div 
+          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          style={{ 
+            backgroundImage: 'url(/images/hero-background.jpg)', 
+            backgroundPosition: 'center 30%'
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-800/80 to-primary-800/30"></div>
+        </div>
+
+        {/* Content with simple transitions */}
+        <div className={`relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center transition-opacity duration-700 ease-in-out ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="max-w-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 font-display">
+              Discover Your <span className="text-secondary-400">Dream Home</span> in Pune
+            </h1>
+            <p className="text-xl text-white/90 mb-8">
+              Explore our curated selection of premium properties with modern amenities and exceptional value.
+            </p>
+            
+            <div className="bg-white rounded-lg shadow-elegant overflow-hidden">
+              <div className="p-4 flex flex-col sm:flex-row gap-4">
+                <button 
+                  onClick={() => setShowLocationModal(true)}
+                  className="flex-1 flex items-center bg-neutral-50 rounded-lg px-4 py-3 text-left border border-neutral-100 hover:border-primary-300 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{locationStats?.totalLocations || '15'}</p>
-                  <p className="text-sm text-white/70">Locations</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  <span className="text-neutral-700 font-medium">
+                    {searchParams.location ? searchParams.location : 'Select Your Location'}
+                  </span>
+                </button>
+                
+                <button
+                  onClick={handleSearch}
+                  className="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-6 py-3 font-medium transition-colors shadow-md"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{locationStats?.avgGrowth || '12'}%</p>
-                  <p className="text-sm text-white/70">Avg. Growth</p>
-                </div>
+                  Search Properties
+                </button>
               </div>
             </div>
-          )}
+            
+            {locationStats && (
+              <div className="mt-8 flex flex-wrap gap-6 text-white">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{locationStats?.total || '250'}+</p>
+                    <p className="text-sm text-white/70">Properties</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{locationStats?.totalLocations || '15'}</p>
+                    <p className="text-sm text-white/70">Locations</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{locationStats?.avgGrowth || '12'}%</p>
+                    <p className="text-sm text-white/70">Avg. Growth</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-      
-      {/* Location Selection Modal */}
-      <LocationSelectionModal />
-    </section>
-  );
+        
+        {/* Location Selection Modal */}
+        <LocationSelectionModal />
+      </section>
+    );
+  }, [imageLoaded, searchParams.location, handleSearch, locationStats]);
 
   // Location Selection Modal
   const LocationSelectionModal = () => {
@@ -453,7 +495,11 @@ const Home = () => {
 
         <div className="text-center mt-12">
           <Button
-            onClick={handleSearch}
+            onClick={() => {
+              const queryParams = new URLSearchParams();
+              queryParams.set('scrollToTop', 'true');
+              navigate(`/properties?${queryParams.toString()}`);
+            }}
             variant="primary"
             size="lg"
             className="shadow-md hover:shadow-lg transition-all duration-300"
@@ -550,7 +596,11 @@ const Home = () => {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Button 
-            onClick={handleSearch}
+            onClick={() => {
+              const queryParams = new URLSearchParams();
+              queryParams.set('scrollToTop', 'true');
+              navigate(`/properties?${queryParams.toString()}`);
+            }}
             variant="secondary" 
             size="lg"
             className="min-w-[180px] shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 transform"
@@ -570,116 +620,40 @@ const Home = () => {
     </section>
   );
 
-  // Add animations when component mounts
-  useEffect(() => {
-    // Create animation styles if they don't already exist
-    if (!document.getElementById('home-animations')) {
-      const styleEl = document.createElement('style');
-      styleEl.id = 'home-animations';
-      styleEl.textContent = `
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 1s ease-in-out;
-        }
-        
-        .animate-slideUp {
-          animation: slideUp 0.8s ease-out;
-          animation-fill-mode: both;
-        }
-        
-        .animate-scaleIn {
-          animation: scaleIn 0.8s ease-out;
-          animation-fill-mode: both;
-        }
-        
-        .delay-100 {
-          animation-delay: 100ms;
-        }
-        
-        .delay-200 {
-          animation-delay: 200ms;
-        }
-        
-        .delay-300 {
-          animation-delay: 300ms;
-        }
-        
-        .delay-400 {
-          animation-delay: 400ms;
-        }
-        
-        .delay-500 {
-          animation-delay: 500ms;
-        }
-      `;
-      document.head.appendChild(styleEl);
-    }
+  // Handle chatbot search
+  const handleChatbotSearch = (filters) => {
+    const params = new URLSearchParams();
+    
+    // Add all non-empty filters to URL params
+    if (filters.location) params.set('location', filters.location);
+    if (filters.flatType) params.set('flatType', filters.flatType.replace(/\s+/g, ''));
+    if (filters.minPrice) params.set('priceRange', `${filters.minPrice}-${filters.maxPrice || ''}`);
+    
+    // Navigate to properties page with filters
+    navigate(`/properties?${params.toString()}`);
+  };
 
-    // Add optimized parallax effect to hero section on scroll
-    let ticking = false;
-    let lastScrollY = 0;
-    
-    const handleScroll = () => {
-      lastScrollY = window.scrollY;
-      
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const heroBackground = document.querySelector('.hero-background');
-          
-          if (heroBackground) {
-            // Calculate transform with a smaller factor for smoother effect
-            // Using a logarithmic function to make the effect more subtle as scrolling increases
-            const translateY = Math.min(lastScrollY * 0.3, 150);
-            heroBackground.style.transform = `translateY(${translateY}px) scale(1.1)`;
-          }
-          
-          ticking = false;
-        });
-        
-        ticking = true;
-      }
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+  // Close chatbot
+  const handleCloseChatBot = () => {
+    setShowChatBot(false);
+  };
+
+  // Memoize the main sections to prevent unnecessary re-renders
+  const MemoizedHeroSection = React.memo(HeroSection);
+  const MemoizedFeaturedPropertiesSection = React.memo(FeaturedPropertiesSection);
+  const MemoizedFeaturesSection = React.memo(FeaturesSection);
+  const MemoizedTestimonialsSection = React.memo(TestimonialsSection);
+  const MemoizedTeamSection = React.memo(TeamSection);
+  const MemoizedCtaSection = React.memo(CtaSection);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <HeroSection />
-      <FeaturedPropertiesSection />
-      <FeaturesSection />
-      <TestimonialsSection />
-      <TeamSection />
-      <CtaSection />
+      <MemoizedHeroSection />
+      <MemoizedFeaturedPropertiesSection />
+      <MemoizedFeaturesSection />
+      <MemoizedTestimonialsSection />
+      <MemoizedTeamSection />
+      <MemoizedCtaSection />
       
       {/* Authentication Modal */}
       <AuthModal 

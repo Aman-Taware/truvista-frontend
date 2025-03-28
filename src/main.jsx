@@ -5,9 +5,10 @@ import './index.css'
 import * as serviceWorkerRegistration from './serviceWorkerRegistration'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+  // StrictMode causes double rendering in development mode,
+  // which makes it look like components are reloading multiple times.
+  // Removing it for better performance.
+  <App />
 )
 
 // Register the service worker for offline capabilities and caching

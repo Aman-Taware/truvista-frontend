@@ -130,6 +130,22 @@ const Properties = () => {
     fetchProperties();
   }, [filters, currentPage]);
 
+  // Scroll to top on page load or when scrollToTop parameter is present
+  useEffect(() => {
+    const scrollToTopParam = searchParams.get('scrollToTop');
+    if (scrollToTopParam === 'true') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+      
+      // Remove the scrollToTop parameter from URL to prevent future automatic scrolling
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('scrollToTop');
+      setSearchParams(newParams);
+    }
+  }, [searchParams, setSearchParams]);
+
   // Update URL search params when filters change
   useEffect(() => {
     const params = new URLSearchParams();

@@ -67,7 +67,7 @@ const PropertyDetail = () => {
           checkShortlistStatus(propertyData.id);
           checkUserBookingStatus(propertyData.id);
         } else {
-          // Reset states if user is not logged in
+          // Reset states if user is not logged 
           setInShortlist(false);
           setUserHasBooking(false);
           setUserBookingDetails(null);
@@ -409,7 +409,6 @@ const PropertyDetail = () => {
     if (!dateString) return 'Not specified';
     try {
       return new Date(dateString).toLocaleDateString(undefined, {
-        year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
@@ -607,7 +606,7 @@ const PropertyDetail = () => {
                     </svg>
                     Construction
                   </span>
-                  <span className="text-xs font-medium">{property.workDone}</span>
+                  <span className="text-xs font-medium">{property.workDone}%</span>
                 </div>
               )}
               

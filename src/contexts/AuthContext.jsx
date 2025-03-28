@@ -17,48 +17,14 @@ export const AuthProvider = ({ children }) => {
     
     // Store only the JWT token in localStorage
     localStorage.setItem('auth_token', token);
-    
-    // Set token expiration time (default to 24 hours if not in token)
-    try {
-      // Try to decode the JWT token to get expiration
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.exp) {
-        // Token already has expiration, use it
-        const expiry = new Date(payload.exp * 1000).toISOString();
-        localStorage.setItem('token_expiry', expiry);
-      } else {
-        // Set a default expiration of 24 hours
-        const expiry = new Date();
-        expiry.setHours(expiry.getHours() + 24);
-        localStorage.setItem('token_expiry', expiry.toISOString());
-      }
-    } catch (e) {
-      // If token parsing fails, set default expiration
-      const expiry = new Date();
-      expiry.setHours(expiry.getHours() + 24);
-      localStorage.setItem('token_expiry', expiry.toISOString());
-    }
   };
 
   const getAuthToken = () => {
-    const token = localStorage.getItem('auth_token');
-    const expiry = localStorage.getItem('token_expiry');
-    
-    // Check if token is expired
-    if (token && expiry) {
-      const isExpired = new Date() > new Date(expiry);
-      if (isExpired) {
-        clearAuthData();
-        return null;
-      }
-    }
-    
-    return token;
+    return localStorage.getItem('auth_token');
   };
 
   const clearAuthData = () => {
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('token_expiry');
     localStorage.removeItem('user_data'); // Remove non-sensitive user data cache
   };
 
