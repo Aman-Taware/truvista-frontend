@@ -113,9 +113,18 @@ const ChatBot = ({ onClose }) => {
         // Process budget input
         processBudgetInput(input);
         
-        // Show summary and search
-        showSearchSummary();
-        setCurrentStep('summary');
+        // Show summary and immediately perform search instead of asking for confirmation
+        const { location, flatType } = searchFilters;
+        
+        // Add user's selection to messages
+        setMessages(prev => [...prev, {
+          id: messages.length + 2,
+          type: 'bot',
+          text: `Searching for ${flatType || 'properties'} in ${location || 'all locations'} within your budget range...`,
+        }]);
+        
+        // Directly perform search instead of going to summary step
+        performSearch();
         break;
         
       case 'summary':
@@ -686,7 +695,7 @@ const ChatBot = ({ onClose }) => {
             <div className="p-1.5 bg-white/20 rounded-md mr-3">
               <MessageSquare size={18} />
             </div>
-            <h3 className="font-semibold">Truvista Assistant</h3>
+            <h3 className="font-semibold text-white ">Truvista Assistant</h3>
           </div>
           <button onClick={onClose || toggleChat} className="p-1 hover:bg-white/20 rounded-md">
             <X size={18} />

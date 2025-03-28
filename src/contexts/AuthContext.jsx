@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import authApi from '../api/authApi';
+import userApi from '../api/userApi';
 
 // Create the context
 export const AuthContext = createContext();
@@ -10,6 +11,57 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Token management functions
+  const storeAuthToken = (token) => {
+    if (!token) return;
+    
+    // Store only the JWT token in localStorage
+    localStorage.setItem('auth_token', token);
+    
+    // Set token expiration time (default to 24 hours if not in token)
+    try {
+      // Try to decode the JWT token to get expiration
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.exp) {
+        // Token already has expiration, use it
+        const expiry = new Date(payload.exp * 1000).toISOString();
+        localStorage.setItem('token_expiry', expiry);
+      } else {
+        // Set a default expiration of 24 hours
+        const expiry = new Date();
+        expiry.setHours(expiry.getHours() + 24);
+        localStorage.setItem('token_expiry', expiry.toISOString());
+      }
+    } catch (e) {
+      // If token parsing fails, set default expiration
+      const expiry = new Date();
+      expiry.setHours(expiry.getHours() + 24);
+      localStorage.setItem('token_expiry', expiry.toISOString());
+    }
+  };
+
+  const getAuthToken = () => {
+    const token = localStorage.getItem('auth_token');
+    const expiry = localStorage.getItem('token_expiry');
+    
+    // Check if token is expired
+    if (token && expiry) {
+      const isExpired = new Date() > new Date(expiry);
+      if (isExpired) {
+        clearAuthData();
+        return null;
+      }
+    }
+    
+    return token;
+  };
+
+  const clearAuthData = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token_expiry');
+    localStorage.removeItem('user_data'); // Remove non-sensitive user data cache
+  };
+
   // Create a simple notification helper
   const showNotification = (message, type = 'info') => {
     console.log(`[${type.toUpperCase()}]: ${message}`);
@@ -19,59 +71,74 @@ export const AuthProvider = ({ children }) => {
   
   // Check if user is logged in on component mount
   useEffect(() => {
-    const checkLoggedIn = async () => {
+    const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
-        const userData = localStorage.getItem('user_data');
+        const token = getAuthToken();
         
-        if (token && userData) {
+        if (token) {
           try {
-            // Try to parse the user data
-            const parsedUserData = JSON.parse(userData);
+            // Get fresh user data from API
+            const response = await userApi.getProfile();
             
-            // Basic validation of the user data structure
-            if (!parsedUserData.isAuthenticated || !parsedUserData.phone) {
-              console.warn('Invalid user data format in localStorage');
-              // Clear invalid data
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('user_data');
-              setUser(null);
-            } else {
-              // Set user state with parsed data
-              setUser(parsedUserData);
+            if (response) {
+              // Extract user data directly from response
+              const userData = {
+                id: response.id,
+                name: response.name,
+                email: response.email,
+                contactNo: response.contactNo,
+                role: response.role, // Keep this for role-based authorization
+                preferredFlatType: response.preferredFlatType,
+                minBudget: response.minBudget,
+                maxBudget: response.maxBudget,
+                isAuthenticated: true
+              };
               
-              // Optional: You could add a token validation check with the backend here
-              // For example: await authApi.validateToken(token)
+              // Update state with user profile data
+              setUser(userData);
+              
+              // Store only non-sensitive data in localStorage for UI purposes
+              const publicUserData = {
+                id: response.id,
+                name: response.name,
+                email: response.email,
+                contactNo: response.contactNo,
+                // Excluded: role
+                preferredFlatType: response.preferredFlatType,
+                minBudget: response.minBudget,
+                maxBudget: response.maxBudget,
+                isAuthenticated: true
+              };
+              
+              localStorage.setItem('user_data', JSON.stringify(publicUserData));
+            } else {
+              // API call failed, clear authentication
+              clearAuthData();
+              setUser(null);
             }
           } catch (parseError) {
-            console.error('Error parsing user data from localStorage:', parseError);
-            // Clear invalid data
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_data');
+            console.error('Error fetching user profile:', parseError);
+            // Clear authentication data
+            clearAuthData();
             setUser(null);
           }
         } else {
-          // If either token or userData is missing, clear both to maintain consistency
-          if (token || userData) {
-            console.warn('Inconsistent auth state: token or userData missing');
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_data');
-          }
+          // No valid token found
+          clearAuthData();
           setUser(null);
         }
       } catch (err) {
         console.error('Error checking auth state:', err);
         setError('Failed to restore session');
         // Clear potentially corrupted data
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
+        clearAuthData();
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
     
-    checkLoggedIn();
+    initializeAuth();
   }, []);
   
   // Function to request OTP
@@ -140,8 +207,6 @@ export const AuthProvider = ({ children }) => {
       if (response.success && response.data) {
         // Extract token with consistent handling of different response formats
         let token = null;
-        let role = 'USER'; // Default role
-        let userId = null;
         
         // Handle various response structures we've seen in the system
         if (typeof response.data === 'string') {
@@ -150,13 +215,9 @@ export const AuthProvider = ({ children }) => {
         } else if (response.data.token) {
           // If response has data.token structure
           token = response.data.token;
-          role = response.data.role || role;
-          userId = response.data.userId;
         } else if (response.data.jwt) {
           // If response has data.jwt structure
           token = response.data.jwt;
-          role = response.data.role || role;
-          userId = response.data.userId;
         }
         
         // Verify we have a valid token before proceeding
@@ -167,29 +228,57 @@ export const AuthProvider = ({ children }) => {
           return { success: false, message: "Invalid token response" };
         }
         
-        // Store the token with a consistent key
-        localStorage.setItem('auth_token', token);
+        // Store only the token in localStorage
+        storeAuthToken(token);
         
-        // Create a consistent user data object
-        const userData = {
-          phone: phoneNumber,
-          isAuthenticated: true,
-          role: role,
-          userId: userId
-        };
-        
-        // Log the data being stored for debugging
-        console.log("User data being stored:", userData);
-        
-        // Store user data
-        localStorage.setItem('user_data', JSON.stringify(userData));
-        
-        // Update state
-        setUser(userData);
-        
-        showNotification("You have been successfully logged in", "success");
-        
-        return { success: true, data: userData };
+        // Get fresh user data from the API
+        try {
+          const userProfile = await userApi.getProfile();
+          
+          if (!userProfile) {
+            throw new Error("Failed to fetch user profile");
+          }
+          
+          // Create user data object from API response
+          const userData = {
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            contactNo: userProfile.contactNo,
+            role: userProfile.role,
+            preferredFlatType: userProfile.preferredFlatType,
+            minBudget: userProfile.minBudget,
+            maxBudget: userProfile.maxBudget,
+            isAuthenticated: true
+          };
+          
+          // Update auth state with user data
+          setUser(userData);
+          
+          // Store only non-sensitive user data for UI purposes
+          const publicUserData = {
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            contactNo: userProfile.contactNo,
+            // Exclude role and sensitive information
+            preferredFlatType: userProfile.preferredFlatType,
+            minBudget: userProfile.minBudget,
+            maxBudget: userProfile.maxBudget,
+            isAuthenticated: true
+          };
+          
+          localStorage.setItem('user_data', JSON.stringify(publicUserData));
+          
+          showNotification("You have been successfully logged in", "success");
+          return { success: true, data: userData };
+        } catch (profileError) {
+          console.error("Error fetching user profile:", profileError);
+          clearAuthData();
+          setError("Failed to load user profile");
+          showNotification("Failed to load user profile", "error");
+          return { success: false, message: "Failed to load user profile" };
+        }
       } else {
         // Handle specific error codes
         if (response.code === 'ACCOUNT_DEACTIVATED') {
@@ -285,8 +374,6 @@ export const AuthProvider = ({ children }) => {
       if (response.success && response.data) {
         // Extract token with consistent handling of different response formats
         let token = null;
-        let role = 'USER'; // Default role for new registrations
-        let userId = null;
         
         // Handle various response structures we've seen in the system
         if (typeof response.data === 'string') {
@@ -295,13 +382,9 @@ export const AuthProvider = ({ children }) => {
         } else if (response.data.token) {
           // If response has data.token structure
           token = response.data.token;
-          role = response.data.role || role;
-          userId = response.data.userId;
         } else if (response.data.jwt) {
           // If response has data.jwt structure
           token = response.data.jwt;
-          role = response.data.role || role;
-          userId = response.data.userId;
         }
         
         // Verify we have a valid token before proceeding
@@ -312,30 +395,58 @@ export const AuthProvider = ({ children }) => {
           return { success: false, message: "Invalid token response" };
         }
         
-        // Store the token with a consistent key
-        localStorage.setItem('auth_token', token);
+        // Store only the token in localStorage
+        storeAuthToken(token);
         
-        // Create a consistent user data object
-        const userDataObj = {
-          phone: userData.phoneNumber,
-          name: userData.name,
-          email: userData.email,
-          isAuthenticated: true,
-          role: role,
-          userId: userId,
-          preferredFlatType: userData.preferredFlatType,
-          budgetRange: [userData.minBudget, userData.maxBudget]
-        };
-        
-        // Store user data
-        localStorage.setItem('user_data', JSON.stringify(userDataObj));
-        
-        // Update state
-        setUser(userDataObj);
-        
-        showNotification("Your account has been created successfully", "success");
-        
-        return { success: true, data: userDataObj };
+        // Get fresh user data from the API
+        try {
+          const userProfile = await userApi.getProfile();
+          
+          if (!userProfile) {
+            throw new Error("Failed to fetch user profile after registration");
+          }
+          
+          // Create user data object from API response
+          const userDataObj = {
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            contactNo: userProfile.contactNo,
+            role: userProfile.role,
+            preferredFlatType: userProfile.preferredFlatType,
+            minBudget: userProfile.minBudget,
+            maxBudget: userProfile.maxBudget,
+            isAuthenticated: true
+          };
+          
+          // Update user state with data from API
+          setUser(userDataObj);
+          
+          // Store only non-sensitive user data for UI purposes
+          const publicUserData = {
+            id: userProfile.id,
+            name: userProfile.name,
+            email: userProfile.email,
+            contactNo: userProfile.contactNo,
+            // Exclude role
+            preferredFlatType: userProfile.preferredFlatType,
+            minBudget: userProfile.minBudget,
+            maxBudget: userProfile.maxBudget,
+            isAuthenticated: true
+          };
+          
+          localStorage.setItem('user_data', JSON.stringify(publicUserData));
+          
+          showNotification("Your account has been created successfully", "success");
+          
+          return { success: true, data: userDataObj };
+        } catch (profileError) {
+          console.error("Error fetching user profile after registration:", profileError);
+          clearAuthData();
+          setError("Failed to load user profile after registration");
+          showNotification("Registration successful but failed to load profile", "warning");
+          return { success: false, message: "Registration successful but failed to load profile" };
+        }
       } else {
         const errorMessage = response.message || "Registration failed";
         setError(errorMessage);
@@ -400,13 +511,20 @@ export const AuthProvider = ({ children }) => {
   
   // Function to log out user
   const logoutUser = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    // Clear all auth data
+    clearAuthData();
+    
+    // Reset user state
     setUser(null);
     
     showNotification("You have been successfully logged out", "info");
     
     return { success: true };
+  };
+  
+  // Function to check if user is admin
+  const isAdmin = () => {
+    return !!user && user.role === 'ADMIN';
   };
   
   // Context value
@@ -415,13 +533,16 @@ export const AuthProvider = ({ children }) => {
     setUser,
     loading,
     error,
+    getAuthToken, // Expose token getter for API calls
     requestOtp,
     verifyUserOtp,
     loginUser,
     registerUser,
     logoutUser,
     isAuthenticated: !!user,
-    isAdmin: !!user && (user.role?.toUpperCase() === 'ADMIN')
+    isAdmin: isAdmin, // Function for checking admin role
+    // Legacy compatibility - to be removed after migration
+    _isAdmin: !!user && user.role === 'ADMIN'
   };
   
   return (

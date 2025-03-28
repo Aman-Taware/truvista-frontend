@@ -1041,7 +1041,6 @@ const BookingsPage = () => {
                             >
                               <option value="PENDING">Pending</option>
                               <option value="CONFIRMED">Confirmed</option>
-                              <option value="CANCELLED">Cancelled</option>
                               <option value="COMPLETED">Completed</option>
                             </select>
                           </div>

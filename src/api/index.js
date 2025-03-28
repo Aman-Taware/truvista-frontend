@@ -13,21 +13,42 @@ const api = axios.create({
   },
 });
 
+/**
+ * Get authentication token from localStorage with expiration check
+ * @returns {string|null} The authentication token or null if no valid token exists
+ */
+const getAuthToken = () => {
+  const token = localStorage.getItem('auth_token');
+  const expiry = localStorage.getItem('token_expiry');
+  
+  // Check if token exists
+  if (!token) return null;
+  
+  // Check if token is expired
+  if (expiry) {
+    const isExpired = new Date() > new Date(expiry);
+    if (isExpired) {
+      // Clear expired token
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('token_expiry');
+      localStorage.removeItem('user_data');
+      return null;
+    }
+  }
+  
+  return token;
+};
+
 // Add a request interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     
     // Only add token if it exists and has a valid format (basic validation)
     if (token && typeof token === 'string' && token.trim() !== '') {
       // Log request with token (without showing the actual token value)
       console.debug(`API Request with auth token: ${config.method.toUpperCase()} ${config.url}`);
       config.headers.Authorization = `Bearer ${token}`;
-    } else if (token) {
-      // If token exists but is invalid, clear it
-      console.warn('Invalid auth token found in localStorage, removing it');
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
     }
     
     return config;
@@ -59,7 +80,7 @@ api.interceptors.response.use(
     
     if (response) {
       // Handle authentication errors
-      if (response.status === 401 || 
+      if (response.status === 401 || response.status === 403 || 
          (response.data && response.data.message && 
           typeof response.data.message === 'string' && 
           (response.data.message.toLowerCase().includes('unauthorized') || 
@@ -70,6 +91,7 @@ api.interceptors.response.use(
         
         // Clear auth state
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('token_expiry');
         localStorage.removeItem('user_data');
         
         // Dispatch event for unauthorized to show login modal

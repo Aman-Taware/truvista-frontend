@@ -16,6 +16,13 @@ const BookingsPage = () => {
   const { showNotification } = useContext(NotificationContext);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rescheduleModal, setRescheduleModal] = useState({
+    isOpen: false,
+    bookingId: null,
+    currentDate: null,
+    newDate: null,
+    processing: false
+  });
   
   useEffect(() => {
     // Scroll to top when component mounts
@@ -85,13 +92,122 @@ const BookingsPage = () => {
     navigate(`/properties/${propertyId}`);
   };
 
-  // Handle booking reschedule
-  const handleReschedule = (bookingId) => {
-    // In a real implementation, this would open a modal or navigate to a reschedule page
-    showNotification({
-      type: 'info',
-      message: 'Reschedule functionality will be available soon'
+  // Handle opening the reschedule modal
+  const handleReschedule = (bookingId, currentDate) => {
+    setRescheduleModal({
+      isOpen: true,
+      bookingId,
+      currentDate,
+      newDate: currentDate || new Date().toISOString().split('T')[0],
+      processing: false
     });
+  };
+  
+  // Close the reschedule modal
+  const closeRescheduleModal = () => {
+    setRescheduleModal({
+      isOpen: false,
+      bookingId: null,
+      currentDate: null,
+      newDate: null,
+      processing: false
+    });
+  };
+  
+  // Handle date change in the reschedule modal
+  const handleDateChange = (e) => {
+    setRescheduleModal({
+      ...rescheduleModal,
+      newDate: e.target.value
+    });
+  };
+  
+  // Submit the reschedule request
+  const submitReschedule = async () => {
+    // Validate the selected date
+    const today = new Date();
+    const selectedDate = new Date(rescheduleModal.newDate);
+    
+    // Check if date is in the past
+    if (selectedDate < today) {
+      showNotification({
+        type: 'error',
+        message: 'Please select a future date.'
+      });
+      return;
+    }
+    
+    // Check if date is within 30 days
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    if (selectedDate > thirtyDaysFromNow) {
+      showNotification({
+        type: 'error',
+        message: 'Please select a date within the next 30 days.'
+      });
+      return;
+    }
+    
+    try {
+      setRescheduleModal({
+        ...rescheduleModal,
+        processing: true
+      });
+      
+      // Prepare update data
+      const updateData = {
+        visitDate: rescheduleModal.newDate,
+        status: 'PENDING' // Change status to PENDING
+      };
+      
+      // Call the API to update the booking
+      await bookingApi.updateBooking(rescheduleModal.bookingId, updateData);
+      
+      // Refresh the bookings list
+      const response = await bookingApi.getUserBookings();
+      
+      if (response) {
+        let bookingsData = [];
+        
+        if (response.data && Array.isArray(response.data)) {
+          bookingsData = response.data;
+        } else if (Array.isArray(response)) {
+          bookingsData = response;
+        } else if (response.bookings) {
+          bookingsData = response.bookings;
+        } else if (response.items) {
+          bookingsData = response.items;
+        } else {
+          bookingsData = [response];
+        }
+        
+        const processedData = bookingsData.map((booking, index) => {
+          if (!booking.id && !booking.bookingId) {
+            return { ...booking, id: `booking-${index}` };
+          }
+          return booking;
+        });
+        
+        setBookings(processedData);
+      }
+      
+      closeRescheduleModal();
+      
+      showNotification({
+        type: 'success',
+        message: 'Your booking has been rescheduled and is pending confirmation.'
+      });
+    } catch (error) {
+      console.error('Error rescheduling booking:', error);
+      setRescheduleModal({
+        ...rescheduleModal,
+        processing: false
+      });
+      showNotification({
+        type: 'error',
+        message: 'Failed to reschedule booking. Please try again.'
+      });
+    }
   };
   
   // Loading state with elegant spinner
@@ -121,7 +237,7 @@ const BookingsPage = () => {
   }, {});
   
   // Order of statuses to display
-  const statusOrder = ['CONFIRMED', 'PENDING', 'SCHEDULED', 'COMPLETED', 'CANCELLED', 'OTHER'];
+  const statusOrder = ['CONFIRMED', 'PENDING', 'COMPLETED'];
 
   // Get status color for section header
   const getStatusColor = (status) => {
@@ -130,7 +246,7 @@ const BookingsPage = () => {
       case 'PENDING': return 'bg-amber-500';
       case 'SCHEDULED': return 'bg-blue-500';
       case 'COMPLETED': return 'bg-primary-500';
-      case 'CANCELLED': return 'bg-neutral-400';
+
       default: return 'bg-neutral-500';
     }
   };
@@ -260,7 +376,7 @@ const BookingsPage = () => {
                               
                               {canChangeDate && bookingId && (
                                 <Button 
-                                  onClick={() => handleReschedule(bookingId)}
+                                  onClick={() => handleReschedule(bookingId, visitDate)}
                                   variant="outline"
                                   size="xs"
                                   className="text-xs flex-1"
@@ -301,6 +417,65 @@ const BookingsPage = () => {
           </Button>
         </div>
       </Container>
+      
+      {/* Reschedule Modal */}
+      {rescheduleModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div className="p-5 border-b border-neutral-200">
+              <h3 className="text-lg font-bold text-neutral-900">Reschedule Booking</h3>
+              <p className="text-neutral-700 text-sm mt-1">
+                Select a new date for your property visit. New date must be within 30 days.
+              </p>
+            </div>
+            
+            <div className="p-5">
+              <div className="mb-4">
+                <label htmlFor="visitDate" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Select New Visit Date
+                </label>
+                <input
+                  type="date"
+                  id="visitDate"
+                  name="visitDate"
+                  value={rescheduleModal.newDate}
+                  onChange={handleDateChange}
+                  min={new Date().toISOString().split('T')[0]}
+                  max={(() => {
+                    const maxDate = new Date();
+                    maxDate.setDate(maxDate.getDate() + 30);
+                    return maxDate.toISOString().split('T')[0];
+                  })()}
+                  className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-xs text-neutral-500 mt-1">
+                  Note: Rescheduling will change the booking status to "Pending" for reconfirmation.
+                </p>
+              </div>
+            </div>
+            
+            <div className="p-5 border-t border-neutral-200 flex justify-end space-x-3">
+              <Button
+                onClick={closeRescheduleModal}
+                variant="ghost"
+                size="sm"
+                disabled={rescheduleModal.processing}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submitReschedule}
+                variant="primary"
+                size="sm"
+                disabled={rescheduleModal.processing}
+                isLoading={rescheduleModal.processing}
+              >
+                Submit Request
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

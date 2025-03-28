@@ -5,6 +5,7 @@ import { NotificationContext } from '../../contexts/NotificationContext';
 import adminApi from '../../api/adminApi';
 import { formatDate } from '../../utils/dateUtils';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { FLAT_TYPES, LOCATIONS } from '../../constants/constants';
 
 /**
  * Edit Property Page
@@ -516,16 +517,21 @@ const EditPropertyPage = () => {
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700">
                   Location <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   name="location"
                   id="location"
                   value={propertyData.address.location}
                   onChange={handleAddressChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition duration-150"
-                  placeholder="City or area"
                   required
-                />
+                >
+                  <option value="">-- Select Location --</option>
+                  {LOCATIONS.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               {/* Price Range */}
@@ -765,15 +771,20 @@ const EditPropertyPage = () => {
                     <label htmlFor={`flat-type-${index}`} className="block text-sm font-medium text-gray-700">
                       Type <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <select
                       id={`flat-type-${index}`}
                       value={flat.type}
                       onChange={(e) => handleFlatChange(index, 'type', e.target.value)}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="e.g., '2 BHK', 'Studio'"
                       required
-                    />
+                    >
+                      <option value="">-- Select Flat Type --</option>
+                      {FLAT_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   
                   {/* Flat Area */}

@@ -21,7 +21,7 @@ const AdminRoute = () => {
   }
 
   // If not authenticated or not admin, redirect to home page
-  if (!isAuthenticated || !isAdmin) {
+  if (!isAuthenticated || !isAdmin()) {
     return <Navigate to="/" replace />;
   }
 

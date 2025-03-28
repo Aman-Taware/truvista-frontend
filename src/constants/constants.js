@@ -13,10 +13,10 @@ export const LOCATIONS = [
 
 // Flat Types
 export const FLAT_TYPES = [
-  '1 BHK',
-  '2 BHK',
-  '3 BHK',
-  '4 BHK'
+  '1BHK',
+  '2BHK',
+  '3BHK',
+  '4BHK'
 ];
 
 // Price Ranges (in INR)
@@ -44,8 +44,8 @@ export const BOOKING_STATUS_COLORS = {
 
 // Construction Status
 export const CONSTRUCTION_STATUS = [
-  'Under Construction',
-  'Nearing Possession'
+  { value: 'UNDER_CONSTRUCTION', label: 'Under Construction' },
+  { value: 'NEARING_POSSESSION', label: 'Nearing Possession' }
 ];
 
 // Amenities
@@ -94,19 +94,12 @@ export const API_MESSAGES = {
   NETWORK_ERROR: 'Network error. Please check your internet connection'
 };
 
-// Property statuses
-export const PROPERTY_STATUSES = {
-  AVAILABLE: 'Available',
-  SOLD: 'Sold',
-  RESERVED: 'Reserved',
-  UNDER_CONSTRUCTION: 'Under Construction'
-};
+
 
 // Booking statuses
 export const BOOKING_STATUSES = {
   PENDING: 'Pending',
   CONFIRMED: 'Confirmed',
-  CANCELLED: 'Cancelled',
   COMPLETED: 'Completed'
 };
 

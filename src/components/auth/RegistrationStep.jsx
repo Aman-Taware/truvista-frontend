@@ -212,12 +212,23 @@ const RegistrationStep = ({
                 onClick={() => handleFlatTypeChange(type)}
                 className={`py-2 px-3 border-2 rounded-md text-sm transition-all ${
                   registrationData.preferredFlatType === type
-                    ? 'border-primary bg-primary/10 text-primary'
+                    ? 'border-primary bg-primary/20 text-primary font-bold shadow-sm relative'
                     : 'border-gray-300 hover:border-gray-400 text-gray-700'
                 }`}
               >
                 <Home size={16} className="inline-block mr-1 -mt-0.5" />
                 {type}
+                {registrationData.preferredFlatType === type && (
+                  <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                    <svg className="h-4 w-4 text-primary-600 fill-current" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="10" className="text-primary-600 fill-current"></circle>
+                      <path
+                        fill="white"
+                        d="M14.59,5.58L8,12.17L4.41,8.59L3,10L8,15L16,7L14.59,5.58Z"
+                      ></path>
+                    </svg>
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -236,12 +247,23 @@ const RegistrationStep = ({
                 onClick={() => handleBudgetChange(range.min, range.max)}
                 className={`py-2 px-3 border-2 rounded-md text-sm transition-all ${
                   registrationData.minBudget === range.min && registrationData.maxBudget === range.max
-                    ? 'border-primary bg-primary/10 text-primary'
+                    ? 'border-primary bg-primary/20 text-primary font-bold shadow-sm relative'
                     : 'border-gray-300 hover:border-gray-400 text-gray-700'
                 }`}
               >
                 <span className="font-medium mr-1">₹</span>
                 {range.label}
+                {registrationData.minBudget === range.min && registrationData.maxBudget === range.max && (
+                  <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
+                    <svg className="h-4 w-4 text-primary-600 fill-current" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="10" className="text-primary-600 fill-current"></circle>
+                      <path
+                        fill="white"
+                        d="M14.59,5.58L8,12.17L4.41,8.59L3,10L8,15L16,7L14.59,5.58Z"
+                      ></path>
+                    </svg>
+                  </span>
+                )}
               </button>
             ))}
           </div>

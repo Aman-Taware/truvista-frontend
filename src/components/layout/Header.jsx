@@ -68,7 +68,7 @@ const Header = () => {
                 <NavLink to="/user/bookings">Bookings</NavLink>
                 <NavLink to="/user/shortlist">Shortlist</NavLink>
                 <NavLink to="/user/profile">Profile</NavLink>
-                {isAdmin && (
+                {isAdmin() && (
                   <NavLink to="/admin" className="text-secondary-500 font-semibold">
                     Admin Dashboard
                   </NavLink>
@@ -130,7 +130,7 @@ const Header = () => {
                 <MobileNavLink to="/user/bookings" onClick={() => setMobileMenuOpen(false)}>Bookings</MobileNavLink>
                 <MobileNavLink to="/user/shortlist" onClick={() => setMobileMenuOpen(false)}>Shortlist</MobileNavLink>
                 <MobileNavLink to="/user/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileNavLink>
-                {isAdmin && (
+                {isAdmin() && (
                   <MobileNavLink 
                     to="/admin" 
                     onClick={() => setMobileMenuOpen(false)}
