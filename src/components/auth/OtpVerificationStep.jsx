@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 /**
  * OTP Verification Step Component
  * The second step in the authentication flow - verifies the OTP sent to user's phone
- * Updated with the revised implementation strategy for improved UI/UX
+ * Updated with enhanced mobile support and SMS autofill capability
  */
 const OtpVerificationStep = ({ 
   phoneNumber, 
@@ -16,18 +16,18 @@ const OtpVerificationStep = ({
   loading, 
   message 
 }) => {
-  // Array of references for each input field
-  const inputRefs = useRef([...Array(6)].map(() => React.createRef()));
+  // Reference for the single OTP input field
+  const otpInputRef = useRef(null);
   
   // Timer for resend OTP functionality
   const [countdown, setCountdown] = useState(30);
   const [isResendActive, setIsResendActive] = useState(false);
   
-  // Start countdown when component mounts
+  // Start countdown when component mounts and setup autofocus
   useEffect(() => {
-    // Focus the first input field
-    if (inputRefs.current[0] && inputRefs.current[0].current) {
-      inputRefs.current[0].current.focus();
+    // Focus the input field
+    if (otpInputRef.current) {
+      otpInputRef.current.focus();
     }
     
     // Initialize countdown
@@ -46,44 +46,19 @@ const OtpVerificationStep = ({
     return () => clearInterval(timer);
   }, []);
   
-  // Handle input change for OTP digits
-  const handleInputChange = (index, value) => {
-    // Only allow digits
-    if (/^\d*$/.test(value)) {
-      // Create a new OTP with the updated value at the given index
-      const newOtp = [...otp.split('')];
-      newOtp[index] = value;
-      
-      // Update the OTP state
-      setOtp(newOtp.join(''));
-      
-      // Move focus to the next input field if value is not empty
-      if (value && index < 5 && inputRefs.current[index + 1]?.current) {
-        inputRefs.current[index + 1].current.focus();
-      }
-    }
-  };
-  
-  // Handle key down events
-  const handleKeyDown = (index, e) => {
-    // Move focus to the previous input on backspace if current input is empty
-    if (e.key === 'Backspace' && !otp[index] && index > 0 && inputRefs.current[index - 1]?.current) {
-      inputRefs.current[index - 1].current.focus();
-    }
-  };
-  
-  // Handle paste event
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text/plain').trim();
+  // Handle input change for OTP
+  const handleInputChange = (e) => {
+    const value = e.target.value;
     
-    // Check if pasted data is a valid 6-digit OTP
-    if (/^\d{6}$/.test(pastedData)) {
-      setOtp(pastedData);
+    // Only allow digits and limit to 6 characters
+    if (/^\d*$/.test(value) && value.length <= 6) {
+      setOtp(value);
       
-      // Focus the last input
-      if (inputRefs.current[5]?.current) {
-        inputRefs.current[5].current.focus();
+      // If input is complete (6 digits), auto-submit after a short delay to allow user to see the completed OTP
+      if (value.length === 6) {
+        setTimeout(() => {
+          onSubmit();
+        }, 300);
       }
     }
   };
@@ -107,14 +82,17 @@ const OtpVerificationStep = ({
     setCountdown(30);
     setIsResendActive(false);
     
-    // Refocus the first input
-    if (inputRefs.current[0]?.current) {
-      inputRefs.current[0].current.focus();
+    // Refocus the input
+    if (otpInputRef.current) {
+      otpInputRef.current.focus();
     }
     
     // Trigger onChangeNumber to go back to phone input (which will request a new OTP)
     onChangeNumber();
   };
+  
+  // Create an array of the OTP digits for display
+  const otpDigits = otp.split('').concat(Array(6 - otp.length).fill(''));
   
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -141,22 +119,36 @@ const OtpVerificationStep = ({
       
       {/* OTP input form */}
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* OTP input fields */}
-        <div className="flex justify-center gap-3">
-          {[...Array(6)].map((_, index) => (
-            <input
-              key={index}
-              ref={inputRefs.current[index]}
-              type="text"
-              maxLength={1}
-              value={otp[index] || ''}
-              onChange={(e) => handleInputChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              onPaste={index === 0 ? handlePaste : undefined}
-              className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
-              required
-            />
-          ))}
+        {/* Hidden input field for actual OTP input and autofill */}
+        <div className="relative">
+          <input
+            ref={otpInputRef}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
+            value={otp}
+            onChange={handleInputChange}
+            maxLength={6}
+            className="opacity-0 absolute w-full h-full top-0 left-0 z-10 cursor-pointer"
+            aria-label="Enter OTP"
+            required
+          />
+          
+          {/* Visual OTP boxes for display */}
+          <div className="flex justify-center gap-3">
+            {otpDigits.map((digit, index) => (
+              <div
+                key={index}
+                onClick={() => otpInputRef.current?.focus()}
+                className={`w-12 h-12 flex items-center justify-center text-center text-lg font-semibold border-2 ${
+                  digit ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
+                } rounded-lg cursor-pointer transition-all`}
+              >
+                {digit}
+              </div>
+            ))}
+          </div>
         </div>
         
         {/* Error/success message */}
