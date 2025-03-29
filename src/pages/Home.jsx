@@ -50,18 +50,30 @@ const Home = () => {
     }));
   }, []);
 
-  // Handle location selection
+  // Handle location selection - Updated to ensure proper state updates
   const handleLocationSelect = useCallback((location) => {
+    console.log('Location selected:', location);
     setSelectedLocation(location);
-    handleSearchParamChange('location', location);
+    // Update the search params with the selected location
+    setSearchParams(prev => ({
+      ...prev,
+      location: location
+    }));
     setShowLocationModal(false);
-  }, [handleSearchParamChange]);
+  }, []);
 
-  // Handle search click with auth check
+  // Add a function to toggle the location modal with debug info
+  const toggleLocationModal = useCallback(() => {
+    console.log('Toggling location modal. Current state:', !showLocationModal);
+    setShowLocationModal(prev => !prev);
+  }, [showLocationModal]);
+
+  // Handle search click with auth check - Simplified to ensure it works correctly
   const handleSearch = useCallback(() => {
+    console.log('Search clicked with location:', searchParams.location);
     if (!user) {
       showNotification({ 
-        type: 'error', 
+        type: 'info', 
         message: 'Please log in to search for properties' 
       });
       setPendingAction(() => () => {
@@ -71,12 +83,8 @@ const Home = () => {
       return;
     }
     
-    // Add scrollToTop=true parameter to ensure the page scrolls to top
-    const queryParams = new URLSearchParams();
-    if (searchParams.location) queryParams.set('location', searchParams.location);
-    queryParams.set('scrollToTop', 'true');
-    
-    navigate(`/properties?${queryParams.toString()}`);
+    // Navigate directly to properties with location parameter
+    navigate(`/properties${searchParams.location ? `?location=${searchParams.location}` : ''}`);
   }, [user, searchParams.location, navigate, showNotification]);
 
   // Handle property card click
@@ -111,9 +119,14 @@ const Home = () => {
     // Preload the hero background image as soon as possible
     const preloadImage = () => {
       const img = new Image();
-      img.src = '/images/hero-background.jpg';
+      img.src = '/images/hero-background.png';
       img.onload = () => {
         setImageLoaded(true);
+      };
+      img.onerror = (e) => {
+        console.error('Error loading hero image:', e);
+        // Fallback to set loaded state true after a delay even if image fails
+        setTimeout(() => setImageLoaded(true), 500);
       };
       
       // Set a timeout as a fallback
@@ -127,10 +140,10 @@ const Home = () => {
     preloadImage();
     
     // Add a link tag for browser preloading
-    if (!document.querySelector('link[rel="preload"][href="/images/hero-background.jpg"]')) {
+    if (!document.querySelector('link[rel="preload"][href="/images/hero-background.png"]')) {
       const preloadLink = document.createElement('link');
       preloadLink.rel = 'preload';
-      preloadLink.href = '/images/hero-background.jpg';
+      preloadLink.href = '/images/hero-background.png';
       preloadLink.as = 'image';
       document.head.appendChild(preloadLink);
     }
@@ -223,48 +236,54 @@ const Home = () => {
   // Hero Section Component with Search - Memoized to prevent unnecessary re-renders
   const HeroSection = useMemo(() => {
     return () => (
-      <section className="relative h-[90vh] overflow-hidden">
-        {/* Loading placeholder */}
+      <section className="relative h-[80vh] overflow-hidden">
+        {/* Background image with simplified loading - removed scale animation */}
         <div 
-          className={`absolute inset-0 bg-gradient-to-b from-primary-700 to-primary-900 transition-opacity duration-700 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}
-          style={{ zIndex: imageLoaded ? -10 : 5 }}
-        >
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-primary-300 border-t-white rounded-full animate-spin mx-auto mb-6"></div>
-              <p className="text-white text-lg font-display">Loading amazing properties...</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Background image with proper loading */}
-        <div 
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-cover bg-center ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           style={{ 
-            backgroundImage: 'url(/images/hero-background.jpg)', 
-            backgroundPosition: 'center 30%'
+            backgroundImage: 'url(/images/hero-background.png)', 
+            backgroundPosition: 'center 30%',
+            transition: 'opacity 0.5s ease' // Simple fade only, no transform
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-800/80 to-primary-800/30"></div>
+          {/* Simplified overlay gradient - no backdrop-blur */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-800/75 to-primary-800/40"></div>
         </div>
 
-        {/* Content with simple transitions */}
-        <div className={`relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center transition-opacity duration-700 ease-in-out ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 font-display">
-              Discover Your <span className="text-secondary-400">Dream Home</span> in Pune
+        {/* Simplified loading experience */}
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-900 to-primary-800 flex items-center justify-center z-10">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-t-secondary-400 border-r-transparent border-b-secondary-400 border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <h3 className="text-xl font-display font-bold text-white">Welcome to Truvista</h3>
+            </div>
+          </div>
+        )}
+
+        {/* Simplified content without heavy animations */}
+        <div className={`relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          style={{ transition: 'opacity 0.5s ease' }} // Simple fade only
+        >
+          <div className="max-w-xl">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-2 font-display">
+              Find Your <span className="text-secondary-400">Dream Home</span>
             </h1>
-            <p className="text-xl text-white/90 mb-8">
-              Explore our curated selection of premium properties with modern amenities and exceptional value.
+            <h2 className="text-2xl md:text-3xl text-white/90 font-display font-light mb-4">
+              in Pune's Premier Locations
+            </h2>
+            <p className="text-lg text-white/80 mb-6">
+              Explore our curated selection of premium properties.
             </p>
             
-            <div className="bg-white rounded-lg shadow-elegant overflow-hidden">
-              <div className="p-4 flex flex-col sm:flex-row gap-4">
+            {/* Simplified search box with smaller buttons */}
+            <div className="bg-white/95 rounded-lg shadow-elegant overflow-hidden">
+              <div className="p-3 flex flex-col sm:flex-row gap-3">
                 <button 
-                  onClick={() => setShowLocationModal(true)}
-                  className="flex-1 flex items-center bg-neutral-50 rounded-lg px-4 py-3 text-left border border-neutral-100 hover:border-primary-300 transition-colors"
+                  onClick={toggleLocationModal}
+                  className="flex-1 flex items-center bg-neutral-50 rounded-lg px-3 py-2 text-left border border-neutral-100 hover:border-primary-300 hover:bg-white text-sm"
+                  aria-label="Select location"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -275,20 +294,21 @@ const Home = () => {
                 
                 <button
                   onClick={handleSearch}
-                  className="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-6 py-3 font-medium transition-colors shadow-md"
+                  className="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg px-4 py-2 font-medium shadow-md text-sm"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Search Properties
+                  Search
                 </button>
               </div>
             </div>
             
+            {/* Simple stats without animations */}
             {locationStats && (
-              <div className="mt-8 flex flex-wrap gap-6 text-white">
+              <div className="mt-6 flex flex-wrap gap-6 text-white">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -300,7 +320,7 @@ const Home = () => {
                 </div>
                 
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -313,7 +333,7 @@ const Home = () => {
                 </div>
                 
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
@@ -328,47 +348,44 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Location Selection Modal */}
-        <LocationSelectionModal />
+        {/* Removed decorative elements that cause lag */}
       </section>
     );
-  }, [imageLoaded, searchParams.location, handleSearch, locationStats]);
+  }, [imageLoaded, searchParams.location, handleSearch, locationStats, toggleLocationModal]);
 
-  // Location Selection Modal
-  const LocationSelectionModal = () => {
-    return (
-      <Modal
-        isOpen={showLocationModal}
-        onClose={() => setShowLocationModal(false)}
-        title="Select Location"
-      >
-        <div className="grid grid-cols-1 gap-2 p-4">
-          {LOCATIONS.map(location => (
-            <div 
-              key={location}
-              className={`
-                px-4 py-3 border rounded-md cursor-pointer transition-colors
-                ${selectedLocation === location 
-                  ? 'bg-primary-50 border-primary-500 text-primary-800' 
-                  : 'hover:bg-neutral-50 border-neutral-200 text-neutral-700'}
-              `}
-              onClick={() => handleLocationSelect(location)}
-            >
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" 
-                  className={`h-5 w-5 mr-3 ${selectedLocation === location ? 'text-primary-600' : 'text-neutral-400'}`} 
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                </svg>
-                {location}
-              </div>
+  // Location Selection Modal - Reverted to original design but keeping functionality fixes
+  const LocationSelectionModal = () => (
+    <Modal
+      isOpen={showLocationModal}
+      onClose={() => setShowLocationModal(false)}
+      title="Select Location"
+    >
+      <div className="grid grid-cols-1 gap-2 p-4">
+        {LOCATIONS.map(location => (
+          <div 
+            key={location}
+            className={`
+              px-4 py-3 border rounded-md cursor-pointer transition-colors
+              ${selectedLocation === location 
+                ? 'bg-primary-50 border-primary-500 text-primary-800' 
+                : 'hover:bg-neutral-50 border-neutral-200 text-neutral-700'}
+            `}
+            onClick={() => handleLocationSelect(location)}
+          >
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" 
+                className={`h-5 w-5 mr-3 ${selectedLocation === location ? 'text-primary-600' : 'text-neutral-400'}`} 
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              </svg>
+              {location}
             </div>
-          ))}
-        </div>
-      </Modal>
-    );
-  };
+          </div>
+        ))}
+      </div>
+    </Modal>
+  );
 
   // Features Section Component
   const FeaturesSection = () => (
@@ -660,6 +677,9 @@ const Home = () => {
         isOpen={showAuthModal} 
         onClose={handleAuthModalClose} 
       />
+      
+      {/* Location Selection Modal - Render at top level */}
+      <LocationSelectionModal />
       
       {/* ChatBot Component */}
       {showChatBot && (

@@ -22,6 +22,7 @@ const PropertyMediaManagement = () => {
   const [mediaType, setMediaType] = useState('PROPERTY_IMAGE');
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   // Fetch property and media data
   useEffect(() => {
@@ -114,8 +115,24 @@ const PropertyMediaManagement = () => {
     
     try {
       setUploading(true);
+      setUploadProgress(0);
       
-      const response = await adminApi.uploadMedia(id, selectedFile, mediaType);
+      // Optimize large images before upload if they're too big
+      let fileToUpload = selectedFile;
+      if (selectedFile.type.startsWith('image/') && selectedFile.size > 5 * 1024 * 1024) {
+        // For images larger than 5MB, we'll compress them before upload
+        fileToUpload = await compressImage(selectedFile);
+      }
+      
+      // Use the progress tracking functionality
+      const response = await adminApi.uploadMedia(
+        id, 
+        fileToUpload, 
+        mediaType, 
+        (progress) => {
+          setUploadProgress(progress);
+        }
+      );
       
       if (response) {
         showNotification({
@@ -123,14 +140,18 @@ const PropertyMediaManagement = () => {
           message: 'Media uploaded successfully'
         });
         
-        // Add the new media to the list or refresh the list
+        // Add the new media to the list without refreshing the entire property
         if (response.id) {
           setMediaItems(prevItems => [...prevItems, response]);
         } else {
-          // Refresh property data to get updated media list
-          const propertyData = await adminApi.getPropertyById(id);
-          if (propertyData.media && Array.isArray(propertyData.media)) {
-            setMediaItems(propertyData.media);
+          // Refresh only the media list rather than fetching the whole property
+          try {
+            const propertyData = await adminApi.getPropertyById(id);
+            if (propertyData.media && Array.isArray(propertyData.media)) {
+              setMediaItems(propertyData.media);
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing media list:', refreshError);
           }
         }
         
@@ -145,11 +166,67 @@ const PropertyMediaManagement = () => {
       console.error('Error uploading media:', error);
       showNotification({
         type: 'error',
-        message: 'Failed to upload media'
+        message: `Failed to upload media: ${error.message}`
       });
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
+  };
+  
+  // Image compression helper function
+  const compressImage = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          // Calculate new dimensions while preserving aspect ratio
+          let width = img.width;
+          let height = img.height;
+          
+          // Determine max dimension to be 1920px (reasonable size for property images)
+          const MAX_WIDTH = 1920;
+          const MAX_HEIGHT = 1920;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Get compressed image as Blob
+          canvas.toBlob((blob) => {
+            // Create a new File object with compressed image
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          }, file.type, 0.8); // 0.8 quality is usually a good balance
+        };
+        img.onerror = (error) => {
+          reject(error);
+        };
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+    });
   };
   
   // Handle media deletion
@@ -345,6 +422,17 @@ const PropertyMediaManagement = () => {
                       
                       {/* Upload Button */}
                       <div>
+                        {uploading && (
+                          <div className="mb-3">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                              <div 
+                                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                                style={{ width: `${uploadProgress}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-gray-500 text-right">{uploadProgress}% uploaded</p>
+                          </div>
+                        )}
                         <button
                           type="button"
                           disabled={!selectedFile || uploading}

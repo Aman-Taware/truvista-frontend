@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
@@ -12,10 +12,10 @@ import { formatPrice } from '../../utils/format';
  * Displays user information with improved layout and readability
  */
 const ProfilePage = () => {
-  const { user, setUser } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { showNotification } = useContext(NotificationContext);
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     id: '',
     name: '',
@@ -28,6 +28,7 @@ const ProfilePage = () => {
   
   // Add a ref to track if we've already performed the initial profile fetch
   const initialFetchDone = useRef(false);
+  const fetchInProgress = useRef(false);
   
   // Helper function to compare objects deeply
   const isEqual = (obj1, obj2) => {
@@ -35,6 +36,28 @@ const ProfilePage = () => {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
   };
   
+  // Extract profile data from user object (already in AuthContext)
+  const updateProfileFromUser = useCallback(() => {
+    if (user) {
+      setProfileData({
+        id: user.id || '',
+        name: user.name || '',
+        email: user.email || '',
+        contactNo: user.contactNo || '',
+        preferredFlatType: user.preferredFlatType || '',
+        minBudget: user.minBudget || null,
+        maxBudget: user.maxBudget || null
+      });
+      initialFetchDone.current = true;
+    }
+  }, [user]);
+  
+  // Effect to update profile data when user changes
+  useEffect(() => {
+    updateProfileFromUser();
+  }, [updateProfileFromUser]);
+  
+  // Fetch profile data only if needed
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
@@ -42,9 +65,11 @@ const ProfilePage = () => {
     // Load user profile data when component mounts
     const fetchUserProfile = async () => {
       // Skip if we've already fetched the profile once
-      if (initialFetchDone.current) return;
+      // or if we already have user data from the AuthContext
+      if (initialFetchDone.current || fetchInProgress.current) return;
       
       try {
+        fetchInProgress.current = true;
         setLoading(true);
         
         // Call the API and get the response
@@ -68,53 +93,36 @@ const ProfilePage = () => {
           // Update state with user profile data
           setProfileData(userData);
           
-          // Get the existing user data from localStorage
-          const existingUserData = localStorage.getItem('user_data') 
-            ? JSON.parse(localStorage.getItem('user_data')) 
-            : {};
-          
-          // Log for debugging
-          console.log("Profile: Existing user data in localStorage:", existingUserData);
-          console.log("Profile: New user data from API:", userData);
-          
-          // Store additional user data in localStorage for persistence
-          // Ensure we preserve the role and other authentication state
-          const updatedUserData = {
-            ...existingUserData,
-            ...userData,
-            role: userData.role || existingUserData.role, // Ensure role is preserved
-            isAuthenticated: true
-          };
-          
-          console.log("Profile: Updated user data for localStorage:", updatedUserData);
-          localStorage.setItem('user_data', JSON.stringify(updatedUserData));
-          
-          // Only update user context if the data is actually different to prevent re-render loop
-          if (user && typeof user === 'object' && !isEqual(user, updatedUserData)) {
-            setUser(updatedUserData);
-          }
+          // Mark that we've completed the initial fetch
+          initialFetchDone.current = true;
         } else {
           showNotification({
             type: 'warning',
             message: 'Profile data may be incomplete. Please check your information.'
           });
         }
-        
-        // Mark that we've completed the initial fetch
-        initialFetchDone.current = true;
-        setLoading(false);
       } catch (error) {
+        if (error.message === 'Duplicate request cancelled') {
+          console.log('Duplicate profile fetch prevented');
+          return;
+        }
+        
         console.error('Error fetching profile:', error);
-        setLoading(false);
         showNotification({
           type: 'error',
           message: 'Failed to load profile data. Please try again.'
         });
+      } finally {
+        setLoading(false);
+        fetchInProgress.current = false;
       }
     };
     
-    fetchUserProfile();
-  }, [showNotification, setUser]); // Remove `user` from the dependency array
+    // Only fetch if we don't already have the user data
+    if (!user) {
+      fetchUserProfile();
+    }
+  }, [showNotification, user]);
   
   // Format the budget range from min and max budgets
   const formatBudgetRange = () => {

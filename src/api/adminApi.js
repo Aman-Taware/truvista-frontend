@@ -117,20 +117,32 @@ const adminApi = {
    * @param {number} propertyId - Property ID
    * @param {File} file - File to upload
    * @param {string} mediaType - Type of media (PROPERTY_IMAGE, LAYOUT, BROCHURE, QR_CODE)
+   * @param {function} onProgress - Optional callback for upload progress
    * @returns {Promise} Uploaded media info
    */
-  uploadMedia: async (propertyId, file, mediaType) => {
+  uploadMedia: async (propertyId, file, mediaType, onProgress) => {
     try {
       console.log(`Uploading media for property ${propertyId}, type: ${mediaType}`);
       
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('mediaType', mediaType);
-    
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('mediaType', mediaType);
+      
       const response = await api.post(`/api/admin/properties/${propertyId}/media`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        // Add upload progress tracking
+        onUploadProgress: onProgress ? 
+          progressEvent => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(percentCompleted);
+          } : undefined,
+        // Increase timeout for larger files
+        timeout: 300000, // 5 minutes
+        // Buffer size optimizations
+        maxBodyLength: 50 * 1024 * 1024, // 50MB max upload size
+        maxContentLength: 50 * 1024 * 1024 // 50MB max content length
       });
       
       console.log('Media upload successful:', response);

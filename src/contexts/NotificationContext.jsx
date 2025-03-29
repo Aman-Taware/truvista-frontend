@@ -1,6 +1,7 @@
-import { createContext, useState, useCallback } from 'react';
+import { createContext, useState, useCallback, useEffect, useContext } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import NotificationContainer from '../components/ui/NotificationContainer';
+import notificationService from '../utils/notificationService';
 
 // Create context
 export const NotificationContext = createContext();
@@ -23,6 +24,11 @@ export const NotificationProvider = ({ children }) => {
     
     return id;
   }, []);
+
+  // Initialize notification service when component mounts
+  useEffect(() => {
+    notificationService.initNotificationService(showNotification);
+  }, [showNotification]);
 
   // Remove a specific notification
   const removeNotification = useCallback((id) => {
@@ -50,4 +56,14 @@ export const NotificationProvider = ({ children }) => {
   );
 };
 
-export default NotificationProvider; 
+// Custom hook for using the notification context
+export const useNotification = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotification must be used within a NotificationProvider');
+  }
+  return context;
+};
+
+// For Fast Refresh compatibility, export NotificationContext as the default
+export default NotificationContext; 

@@ -1,9 +1,11 @@
-import { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../contexts/AuthContext';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import Container from '../../components/ui/Container';
 import Button from '../../components/ui/Button';
 import BookingStatusBadge from '../../components/booking/BookingStatusBadge';
+import Modal from '../../components/ui/Modal';
 import bookingApi from '../../api/bookingApi';
 import { formatDate } from '../../utils/format';
 
@@ -13,9 +15,11 @@ import { formatDate } from '../../utils/format';
  */
 const BookingsPage = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated, refreshToken } = useContext(AuthContext);
   const { showNotification } = useContext(NotificationContext);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [rescheduleModal, setRescheduleModal] = useState({
     isOpen: false,
     bookingId: null,
@@ -24,68 +28,110 @@ const BookingsPage = () => {
     processing: false
   });
   
-  useEffect(() => {
-    // Scroll to top when component mounts
-    window.scrollTo(0, 0);
+  // Refs to prevent concurrent API calls
+  const bookingsFetchingRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
+  
+  // Fetch bookings with retry mechanism for network issues
+  const fetchBookings = useCallback(async () => {
+    // Skip if we're already fetching
+    if (bookingsFetchingRef.current) {
+      console.log('Bookings fetch already in progress, skipping duplicate request');
+      return;
+    }
     
-    // Fetch user's bookings
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        
-        // Direct API call
-        const response = await bookingApi.getUserBookings();
-        console.log("Bookings API Response:", response);
-        
-        // Process response - already handled by interceptor
-        if (response) {
-          let bookingsData = [];
-          
-          // Check for API response wrapped in data property
-          if (response.data && Array.isArray(response.data)) {
-            bookingsData = response.data;
-          } else if (Array.isArray(response)) {
-            bookingsData = response;
-          } else if (response.bookings) {
-            bookingsData = response.bookings;
-          } else if (response.items) {
-            bookingsData = response.items;
-          } else {
-            // If it's a single object
-            bookingsData = [response];
-          }
-          
-          console.log("Processed bookings data:", bookingsData);
-          
-          // Ensure each booking has an ID
-          const processedData = bookingsData.map((booking, index) => {
-            // Debug each booking object
-            console.log(`Booking ${index}:`, booking);
-            
-            if (!booking.id && !booking.bookingId) {
-              return { ...booking, id: `booking-${index}` };
-            }
-            return booking;
-          });
-          
-          setBookings(processedData);
-        } else {
-          setBookings([]);
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-        setLoading(false);
-        showNotification({
-          type: 'error',
-          message: 'Failed to load bookings. Please try again.'
-        });
+    // Skip if not authenticated
+    if (!isAuthenticated) {
+      console.log('User not authenticated, skipping bookings fetch');
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      bookingsFetchingRef.current = true;
+      setLoading(true);
+      
+      // Add a timestamp to prevent cache issues and avoid duplicate request cancellation
+      const timestamp = Date.now();
+      const response = await bookingApi.getUserBookings({ _t: timestamp });
+      
+      // Check if we have actual data - API structure may vary
+      if (Array.isArray(response)) {
+        // Data already processed
+        setBookings(response.map(booking => ({ ...booking, id: booking.id || Math.random().toString() })));
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Standard API response
+        setBookings(response.data.map(booking => ({ ...booking, id: booking.id || Math.random().toString() })));
+      } else if (response && response.content && Array.isArray(response.content)) {
+        // Paginated response
+        setBookings(response.content.map(booking => ({ ...booking, id: booking.id || Math.random().toString() })));
+      } else if (response && Array.isArray(response.bookings)) {
+        // Custom booking wrapper
+        setBookings(response.bookings.map(booking => ({ ...booking, id: booking.id || Math.random().toString() })));
+      } else {
+        // Fallback
+        console.warn('Unexpected response format from booking API:', response);
+        setBookings([]);
       }
-    };
-    
-    fetchBookings();
-  }, [showNotification]);
+      
+      // Reset retry counter on success
+      retryCountRef.current = 0;
+      setError(null);
+    } catch (err) {
+      // Handle "user logged out" specific error
+      if (err.message === 'User is logged out. Please login again.') {
+        console.log('Not fetching bookings - user is logged out');
+        setError('Please login to view your bookings');
+        setBookings([]);
+        return;
+      }
+      
+      // Handle duplicate request cancellation
+      if (err.message === 'Duplicate request cancelled') {
+        console.log('Duplicate bookings request cancelled');
+        return;
+      }
+      
+      console.error('Error fetching bookings:', err);
+      
+      // Check if this is a network error (not an auth error)
+      const isNetworkError = !err.response && err.message !== 'User is logged out. Please login again.';
+      
+      if (isNetworkError && retryCountRef.current < maxRetries) {
+        // Exponential backoff for retries: 1s, 2s, 4s
+        const retryDelay = Math.pow(2, retryCountRef.current) * 1000;
+        retryCountRef.current++;
+        
+        console.log(`Network error fetching bookings. Retrying in ${retryDelay}ms (${retryCountRef.current}/${maxRetries})`);
+        setTimeout(fetchBookings, retryDelay);
+        return;
+      }
+      
+      // Set error state for UI feedback
+      setError(err.message || 'Failed to load bookings');
+      
+      // Show a notification for better UX
+      showNotification({
+        type: 'error',
+        message: 'Failed to load bookings. Please try again later.'
+      });
+      
+      setBookings([]);
+    } finally {
+      setLoading(false);
+      bookingsFetchingRef.current = false;
+    }
+  }, [isAuthenticated, showNotification]);
+  
+  // Initial data fetch
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchBookings();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, fetchBookings]);
   
   // Handle viewing a property
   const handleViewProperty = (propertyId) => {
@@ -164,7 +210,11 @@ const BookingsPage = () => {
       await bookingApi.updateBooking(rescheduleModal.bookingId, updateData);
       
       // Refresh the bookings list
-      const response = await bookingApi.getUserBookings();
+      // Reset the fetching ref to force a new fetch
+      bookingsFetchingRef.current = false;
+      const response = await bookingApi.getUserBookings({
+        _t: Date.now() // Add timestamp to prevent duplicate request cancellation
+      });
       
       if (response) {
         let bookingsData = [];
