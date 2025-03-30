@@ -19,8 +19,8 @@ const api = axios.create({
 
 // Track ongoing requests to prevent duplicates
 const ongoingRequests = new Map();
-// Global auth state 
-let userLoggedOut = false;
+// Global auth state - IMPORTANT: Default to NOT logged out to allow auth check on startup
+let userLoggedOut = false; // Start with false to attempt auth on startup
 let refreshingToken = false;
 
 // Debug mode for API calls
@@ -28,6 +28,14 @@ const DEBUG = process.env.NODE_ENV === 'development';
 
 // Export function to check if the user is logged out from anywhere in the app
 window.isUserLoggedOut = () => userLoggedOut;
+
+// Export function to reset logged out state from anywhere in the app
+window.resetLoggedOutState = () => {
+  userLoggedOut = false;
+  if (DEBUG) {
+    console.log('Global logged out state reset (window method)');
+  }
+};
 
 /**
  * Interceptor to add request timestamp and prevent duplicate requests
@@ -90,6 +98,14 @@ api.interceptors.response.use(
     // Debug logging in development
     if (DEBUG) {
       console.debug(`API Response ${response.status}: ${response.config.method.toUpperCase()} ${response.config.url}`);
+    }
+
+    // For successful auth-related responses, ensure logged out flag is reset
+    if (response.config.url.includes('/api/auth/') || response.config.url.includes('/api/users/profile')) {
+      if (DEBUG) {
+        console.debug('Auth-related API success, ensuring logged out state is reset');
+      }
+      userLoggedOut = false;
     }
 
     // Handle different response formats

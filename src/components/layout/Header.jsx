@@ -63,7 +63,7 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <NavLink to="/">Home</NavLink>
             <NavLink to="/properties">Properties</NavLink>
-            {isAuthenticated && (
+            {isAuthenticated() && (
               <>
                 <NavLink to="/user/bookings">Bookings</NavLink>
                 <NavLink to="/user/shortlist">Shortlist</NavLink>
@@ -79,7 +79,7 @@ const Header = () => {
             <NavLink to="/contact">Contact</NavLink>
             
             {/* Sign-in/out Button */}
-            {isAuthenticated ? (
+            {isAuthenticated() ? (
               <button 
                 className="text-error-500 hover:text-error-700 transition-colors font-medium text-sm"
                 onClick={handleLogout}
@@ -125,7 +125,7 @@ const Header = () => {
           <nav className="py-4 flex flex-col space-y-1">
             <MobileNavLink to="/" onClick={() => setMobileMenuOpen(false)}>Home</MobileNavLink>
             <MobileNavLink to="/properties" onClick={() => setMobileMenuOpen(false)}>Properties</MobileNavLink>
-            {isAuthenticated && (
+            {isAuthenticated() && (
               <>
                 <MobileNavLink to="/user/bookings" onClick={() => setMobileMenuOpen(false)}>Bookings</MobileNavLink>
                 <MobileNavLink to="/user/shortlist" onClick={() => setMobileMenuOpen(false)}>Shortlist</MobileNavLink>
@@ -145,7 +145,7 @@ const Header = () => {
             <MobileNavLink to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</MobileNavLink>
             
             <div className="border-t border-neutral-100 pt-3 mt-3">
-              {isAuthenticated ? (
+              {isAuthenticated() ? (
                 <button 
                   className="w-full text-left px-2 py-2 text-error-500 font-medium hover:bg-error-50 rounded-md transition-colors"
                   onClick={() => {

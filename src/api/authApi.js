@@ -245,6 +245,12 @@ const authApi = {
       
       const data = extractData(response);
       console.log("Token refreshed successfully");
+      
+      // Reset any "logged out" state in the main API client
+      if (window.resetLoggedOutState) {
+        window.resetLoggedOutState();
+      }
+      
       return data;
     } catch (error) {
       // Log detailed error information
@@ -341,6 +347,48 @@ const authApi = {
       return false;
     }
   },
+
+  /**
+   * Ensure user is authenticated by checking and refreshing tokens if needed
+   * @returns {Promise<boolean>} - True if authentication could be established/maintained
+   */
+  async ensureAuthentication() {
+    console.log("Checking authentication status");
+    
+    try {
+      // Reset any "logged out" state to ensure we can try authentication
+      if (window.resetLoggedOutState) {
+        window.resetLoggedOutState();
+      }
+      
+      // Attempt token refresh first
+      try {
+        await this.refreshToken();
+        console.log("Token refreshed successfully during authentication check");
+        return true;
+      } catch (refreshError) {
+        console.log("Token refresh failed during authentication check:", refreshError.message);
+        
+        // Even if refresh fails, still try to get profile as a last resort
+        // This handles edge cases where the token is still valid
+        try {
+          const profile = await this.getProfile();
+          if (profile) {
+            console.log("Profile retrieved successfully despite refresh failure");
+            return true;
+          }
+        } catch (profileError) {
+          console.log("Profile fetch failed after refresh failure");
+        }
+      }
+      
+      // If we get here, authentication couldn't be restored
+      return false;
+    } catch (error) {
+      console.error("Authentication check error:", error);
+      return false;
+    }
+  }
 };
 
 export default authApi; 
