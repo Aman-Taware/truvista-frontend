@@ -5,7 +5,7 @@
 
 // API base URL - adjust based on environment
 export const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.truvista.com'
+  ? 'https://api.truvista.in'
   : 'http://localhost:8080';
 
 // API request timeout in milliseconds
