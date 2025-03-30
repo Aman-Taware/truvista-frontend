@@ -6,7 +6,7 @@ import Container from '../ui/Container';
 import Logo from '../ui/Logo';
 
 const Header = () => {
-  const { user, logoutUser, isAuthenticated, isAdmin } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,7 +27,7 @@ const Header = () => {
     const handleAuthLogout = (event) => {
       // Handle session expiration
       if (event.detail?.reason === 'session_expired') {
-        logoutUser();
+        logout();
         // Don't automatically show the auth modal
         // setShowAuthModal(true);
       }
@@ -35,10 +35,10 @@ const Header = () => {
     
     document.addEventListener('auth:logout', handleAuthLogout);
     return () => document.removeEventListener('auth:logout', handleAuthLogout);
-  }, [logoutUser]);
+  }, [logout]);
 
   const handleLogout = () => {
-    logoutUser();
+    logout();
     navigate('/');
   };
 

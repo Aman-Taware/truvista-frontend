@@ -87,13 +87,33 @@ const authApi = {
       return extractData(response);
     } catch (error) {
       // Enhance error message for invalid OTPs
-      if (error.response?.status === 400 && error.response?.data?.message) {
-        if (error.response.data.message.includes("expired")) {
-          throw new Error("OTP has expired. Please request a new one.");
-        } else if (error.response.data.message.includes("invalid")) {
-          throw new Error("Invalid OTP. Please check and try again.");
+      if (error.response?.status === 400) {
+        // Check for specific API response patterns
+        if (error.response?.data?.message) {
+          const errorMessage = error.response.data.message;
+          
+          if (errorMessage.includes("expired")) {
+            throw new Error("OTP has expired. Please request a new one.");
+          } else if (errorMessage.includes("invalid") || errorMessage.includes("Invalid")) {
+            throw new Error("The OTP you entered is incorrect. Please check and try again.");
+          } else if (errorMessage.includes("attempts exceeded")) {
+            throw new Error("Too many incorrect attempts. Please request a new OTP.");
+          } else {
+            // Use the server message if available
+            throw new Error(errorMessage);
+          }
+        } else {
+          // Generic 400 error
+          throw new Error("The OTP you entered is incorrect. Please check and try again.");
         }
+      } else if (error.response?.status === 401) {
+        throw new Error("Your session has expired. Please request a new OTP.");
+      } else if (error.response?.status === 429) {
+        throw new Error("Too many requests. Please wait a moment before trying again.");
+      } else if (!error.response && error.message.includes("Network Error")) {
+        throw new Error("Network connection issue. Please check your internet connection and try again.");
       }
+      
       console.error("Verify OTP Error:", error.message, error.response?.data);
       throw error;
     }
@@ -117,6 +137,68 @@ const authApi = {
         }
       }
       console.error("Signin Error:", error.message, error.response?.data);
+      throw error;
+    }
+  },
+
+  /**
+   * Register a new user
+   * @param {Object} userData - User registration data including phoneNumber, otp, name, email, etc.
+   * @returns {Promise<{userId: number, jwt: string}>} - New user data and auth token
+   */
+  async signup(userData) {
+    try {
+      // Map frontend field names to backend expected field names
+      const backendData = {
+        name: userData.name,
+        email: userData.email,
+        contactNo: userData.phoneNumber || userData.contactNo, // Handle both field name formats
+        otp: userData.otp,
+        role: userData.role || 'USER', // Default to USER role if not specified
+        preferredFlatType: userData.preferredFlatType,
+        minBudget: userData.minBudget || 0,
+        maxBudget: userData.maxBudget || 0
+      };
+      
+      // Validate required fields before sending
+      const requiredFields = ['name', 'email', 'contactNo', 'otp', 'role'];
+      const missingFields = requiredFields.filter(field => !backendData[field]);
+      
+      if (missingFields.length > 0) {
+        console.error("Missing required fields for signup:", missingFields);
+        throw new Error(`Missing required fields for registration: ${missingFields.join(', ')}`);
+      }
+      
+      console.log("Registering new user with mapped data:", {
+        ...backendData,
+        otp: backendData.otp ? '******' : undefined, // Log sanitized version
+        contactNo: backendData.contactNo ? '******' + backendData.contactNo.slice(-4) : undefined // Hide most of the contact number
+      });
+      
+      const response = await authApiClient.post("/api/auth/signup", backendData);
+      console.log("User registered successfully");
+      return extractData(response);
+    } catch (error) {
+      // Enhanced error handling with specific error messages for each case
+      if (error.response?.status === 400) {
+        const responseData = error.response.data;
+        console.error("Signup validation error:", responseData);
+        
+        // Check for different types of validation errors
+        if (responseData?.errors && responseData.errors.length > 0) {
+          // Extract specific field errors
+          const fieldErrors = responseData.errors.map(err => err.defaultMessage || err).join(', ');
+          throw new Error(`Validation failed: ${fieldErrors}`);
+        } else if (responseData?.message?.includes("already exists")) {
+          throw new Error("A user with this phone number or email already exists.");
+        } else if (responseData?.message?.includes("OTP")) {
+          throw new Error("Invalid or expired OTP. Please request a new one.");
+        } else if (responseData?.message) {
+          throw new Error(responseData.message);
+        }
+      }
+      
+      console.error("Signup Error:", error.message, error.response?.data);
       throw error;
     }
   },

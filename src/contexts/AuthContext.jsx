@@ -404,6 +404,59 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /**
+   * Register a new user with the API
+   * This is called by AuthModal.jsx during registration flow
+   */
+  const registerUser = useCallback(async (userData) => {
+    try {
+      setLoading(true);
+      console.log('Registering new user with contact:', userData.phoneNumber || userData.contactNo);
+      
+      // Use the signup endpoint to register the user
+      const response = await authApi.signup(userData);
+      
+      // Update auth state with the new user
+      if (response && response.userId) {
+        try {
+          // After signup, attempt to fetch the profile to update the state
+          const profile = await authApi.getProfile();
+          if (profile) {
+            setUser(profile);
+            setSessionValid(true);
+            isAuthenticated = true;
+            isFirstAuthAttempt = false;
+          } else {
+            console.warn('Registration successful but unable to fetch user profile');
+          }
+        } catch (profileError) {
+          // Handle case where profile fetch fails after successful registration
+          console.error('Failed to fetch profile after registration:', profileError);
+          // We can still consider the registration a success even if we couldn't fetch the profile
+        }
+      }
+      
+      return { success: true, data: response };
+    } catch (error) {
+      console.error('Registration error:', error.message);
+      
+      // Provide a more user-friendly error message
+      let errorMessage = error.message || 'Registration failed. Please try again.';
+      
+      // Format validation errors more elegantly
+      if (errorMessage.includes('Validation failed:')) {
+        errorMessage = errorMessage.replace('Validation failed:', 'Please fix the following:');
+      }
+      
+      return { 
+        success: false, 
+        message: errorMessage 
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
    * Handle user profile updates
    */
   const updateUserProfile = useCallback(async (profileData) => {
@@ -449,8 +502,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Request OTP error:', error.message);
       
-      return { 
-        success: false, 
+          return { 
+            success: false, 
         message: error.message || 'Failed to send OTP. Please try again.' 
       };
     } finally {
@@ -477,8 +530,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Verify OTP error:', error.message);
       
-      return { 
-        success: false, 
+          return { 
+            success: false, 
         message: error.message || 'Failed to verify OTP. Please try again.' 
       };
     } finally {
@@ -574,6 +627,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     login,
     signup,
+    registerUser,
     requestOtp,
     verifyUserOtp,
     loginUser,
