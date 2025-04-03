@@ -13,7 +13,6 @@ export const LOCATIONS = [
 
 // Flat Types
 export const FLAT_TYPES = [
-  '1BHK',
   '2BHK',
   '3BHK',
   '4BHK'
@@ -21,11 +20,10 @@ export const FLAT_TYPES = [
 
 // Price Ranges (in INR)
 export const PRICE_RANGES = [
-  { label: '₹ Under 30L', min: 0, max: 3000000 },
-  { label: '₹ 30L - 50L', min: 3000000, max: 5000000 },
-  { label: '₹ 50L - 80L', min: 5000000, max: 8000000 },
-  { label: '₹ 80L - 1Cr', min: 8000000, max: 10000000 },
-  { label: '₹ 1Cr+', min: 10000000, max: 85000000 }
+  { label: '₹ 40L - 55L', min: 4000000, max: 5500000 },
+  { label: '₹ 55L - 70L', min: 5500000, max: 7000000 },
+  { label: '₹ 70L - 90L', min: 7000000, max: 9000000 },
+  { label: '₹ 90L+', min: 9000000, max: 85000000 }
 ];
 
 // Booking Status

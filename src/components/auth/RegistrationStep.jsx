@@ -276,7 +276,7 @@ const RegistrationStep = ({
                     : 'border-gray-300 hover:border-gray-400 text-gray-700'
                 }`}
               >
-                <span className="font-medium mr-1">₹</span>
+                <span className="font-medium mr-1"></span>
                 {range.label}
                 {registrationData.minBudget === range.min && registrationData.maxBudget === range.max && (
                   <span className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4">
