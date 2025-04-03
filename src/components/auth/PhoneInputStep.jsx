@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 
 /**
@@ -98,16 +99,19 @@ const PhoneInputStep = ({ phoneNumber, setPhoneNumber, onSubmit, loading, messag
           {loading ? 'Sending OTP...' : 'Continue'}
         </Button>
 
-        {/* Terms and privacy notice */}
+        {/* Terms, privacy, and cookie notice */}
         <p className="text-xs text-center text-gray-500 mt-4">
           By continuing, you agree to our{' '}
-          <a href="/terms" className="text-primary hover:underline">
+          <Link to="/terms" className="text-primary hover:underline">
             Terms of Service
-          </a>{' '}
-          and{' '}
-          <a href="/privacy" className="text-primary hover:underline">
+          </Link>,{' '}
+          <Link to="/privacy" className="text-primary hover:underline">
             Privacy Policy
-          </a>
+          </Link>,{' '}
+          and{' '}
+          <Link to="/cookies" className="text-primary hover:underline">
+            Cookie Policy
+          </Link>
         </p>
       </form>
     </div>

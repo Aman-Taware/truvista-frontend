@@ -16,6 +16,9 @@ import Contact from './pages/Contact';
 import About from './pages/About';
 import NotFound from './pages/NotFound';
 import StyleGuide from './pages/StyleGuide';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import CookiePolicy from './pages/CookiePolicy';
 
 // User Pages
 import Profile from './pages/User/Profile';
@@ -52,6 +55,9 @@ const App = () => {
               <Route path="properties/:id" element={<PropertyDetail />} />
               <Route path="contact" element={<Contact />} />
               <Route path="about" element={<About />} />
+              <Route path="terms" element={<TermsOfService />} />
+              <Route path="privacy" element={<PrivacyPolicy />} />
+              <Route path="cookies" element={<CookiePolicy />} />
               
               {/* Protected User Routes */}
               <Route 

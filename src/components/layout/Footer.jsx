@@ -74,21 +74,21 @@ const Footer = () => {
                     <MapPin size={18} strokeWidth={2.5} />
                   </div>
                   <span>
-                    1234 Park Avenue, <br />
-                    New York, NY 10001
+                    Moshi, Pune<br />
+                    412105
                   </span>
                 </div>
                 <div className="flex items-center">
                   <div className="text-secondary-300 mr-3">
                     <Phone size={18} strokeWidth={2.5} />
                   </div>
-                  <span>+1 (555) 123-4567</span>
+                  <span>+91 9158925160</span>
                 </div>
                 <div className="flex items-center">
                   <div className="text-secondary-300 mr-3">
                     <Mail size={18} strokeWidth={2.5} />
                   </div>
-                  <span>info@truvista.com</span>
+                  <span>truvista25@gmail.com</span>
                 </div>
               </address>
             </div>

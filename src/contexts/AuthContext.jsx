@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
         return response;
       })
       .catch(error => {
-        console.error('Token refresh failed:', error.message);
+        console.log('Token refresh failed:', error.message);
         
         // Try again with exponential backoff if we haven't exceeded max retries
         if (retry < maxRetries) {
@@ -169,7 +169,7 @@ export const AuthProvider = ({ children }) => {
               console.log('Session expired, logging out user');
               logout(true);
             }
-          } else {
+      } else {
             console.log('First auth attempt failed - this is normal for new visitors');
           }
           return null;
@@ -290,7 +290,7 @@ export const AuthProvider = ({ children }) => {
     // This prevents showing "session expired" for first-time visitors
     if (!isFirstAuthAttempt) {
       notificationService.showWarning('Your session has expired. Please log in again.');
-    } else {
+      } else {
       console.log('First auth attempt - not showing session expired notification');
     }
     
@@ -527,42 +527,40 @@ export const AuthProvider = ({ children }) => {
             isAuthenticated = true;
             isFirstAuthAttempt = false;
             
+            // Store terms and cookie acceptance in localStorage
+            localStorage.setItem('termsAccepted', 'true');
+            localStorage.setItem('cookieConsent', 'accepted');
+            
             // Reset logged out state in API client
             if (typeof api.resetLoggedOutState === 'function') {
               api.resetLoggedOutState();
             } else if (window.resetLoggedOutState) {
               window.resetLoggedOutState();
             }
-          } else {
+      } else {
             console.warn('Registration successful but unable to fetch user profile');
           }
         } catch (profileError) {
           // Handle case where profile fetch fails after successful registration
           console.error('Failed to fetch profile after registration:', profileError);
           // We can still consider the registration a success even if we couldn't fetch the profile
+          // Still set terms acceptance as the user has completed registration
+          localStorage.setItem('termsAccepted', 'true');
+          localStorage.setItem('cookieConsent', 'accepted');
         }
       }
       
       return { success: true, data: response };
     } catch (error) {
-      console.error('Registration error:', error.message);
+      console.error('Registration error:', error);
       
-      // Provide a more user-friendly error message
-      let errorMessage = error.message || 'Registration failed. Please try again.';
-      
-      // Format validation errors more elegantly
-      if (errorMessage.includes('Validation failed:')) {
-        errorMessage = errorMessage.replace('Validation failed:', 'Please fix the following:');
-      }
-      
-      return { 
-        success: false, 
-        message: errorMessage 
-      };
+      // Extract error message from the error or set a default
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed. Please try again.';
+      return { success: false, message: errorMessage };
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setLoading]);
 
   // Initialize authentication on component mount
   useEffect(() => {
@@ -610,7 +608,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Token refresh event received');
       refreshAuthToken()
         .then(() => console.log('Token refresh successful via event'))
-        .catch(error => console.error('Token refresh failed via event:', error.message));
+        .catch(error => console.log('Token refresh failed via event:', error.message));
     };
     
     // Add event listeners

@@ -62,9 +62,9 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <NavLink to="/">Home</NavLink>
-            <NavLink to="/properties">Properties</NavLink>
             {isAuthenticated() && (
               <>
+                <NavLink to="/properties">Properties</NavLink>
                 <NavLink to="/user/bookings">Bookings</NavLink>
                 <NavLink to="/user/shortlist">Shortlist</NavLink>
                 <NavLink to="/user/profile">Profile</NavLink>
@@ -124,9 +124,10 @@ const Header = () => {
         <Container>
           <nav className="py-4 flex flex-col space-y-1">
             <MobileNavLink to="/" onClick={() => setMobileMenuOpen(false)}>Home</MobileNavLink>
-            <MobileNavLink to="/properties" onClick={() => setMobileMenuOpen(false)}>Properties</MobileNavLink>
+            
             {isAuthenticated() && (
               <>
+                <MobileNavLink to="/properties" onClick={() => setMobileMenuOpen(false)}>Properties</MobileNavLink>
                 <MobileNavLink to="/user/bookings" onClick={() => setMobileMenuOpen(false)}>Bookings</MobileNavLink>
                 <MobileNavLink to="/user/shortlist" onClick={() => setMobileMenuOpen(false)}>Shortlist</MobileNavLink>
                 <MobileNavLink to="/user/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileNavLink>

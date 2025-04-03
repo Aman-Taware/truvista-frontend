@@ -104,6 +104,23 @@ const Home = () => {
     navigate(`/properties/${propertyId}`);
   }, [user, navigate, showNotification]);
 
+
+  const handleViewPropertiesClick = useCallback(() => {
+    if (!user) {
+      showNotification({ 
+        type: 'error', 
+        message: 'Please log in to view properties' 
+      });
+      setPendingAction(() => () => {
+        navigate(`/properties`);
+      });
+      setShowAuthModal(true);
+      return;
+    }
+    
+    navigate(`/properties`);
+  }, [user, navigate, showNotification]);
+
   // Handle auth modal close
   const handleAuthModalClose = useCallback(() => {
     setShowAuthModal(false);
@@ -512,11 +529,7 @@ const Home = () => {
 
         <div className="text-center mt-12">
           <Button
-            onClick={() => {
-              const queryParams = new URLSearchParams();
-              queryParams.set('scrollToTop', 'true');
-              navigate(`/properties?${queryParams.toString()}`);
-            }}
+            onClick={handleViewPropertiesClick}
             variant="primary"
             size="lg"
             className="shadow-md hover:shadow-lg transition-all duration-300"
@@ -552,7 +565,7 @@ const Home = () => {
               avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
             },
             {
-              name: 'Aman Taware',
+              name: 'Siddhi Lonari',
               role: 'Property Investor',
               content: "I've used Truvista for multiple investment properties. Their market insights and property selections have consistently delivered excellent returns on my investments.",
               avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
@@ -613,11 +626,7 @@ const Home = () => {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Button 
-            onClick={() => {
-              const queryParams = new URLSearchParams();
-              queryParams.set('scrollToTop', 'true');
-              navigate(`/properties?${queryParams.toString()}`);
-            }}
+            onClick={() => {handleViewPropertiesClick}}
             variant="secondary" 
             size="lg"
             className="min-w-[180px] shadow-lg hover:shadow-xl transition-transform hover:-translate-y-1 transform"
@@ -660,7 +669,6 @@ const Home = () => {
   const MemoizedFeaturedPropertiesSection = React.memo(FeaturedPropertiesSection);
   const MemoizedFeaturesSection = React.memo(FeaturesSection);
   const MemoizedTestimonialsSection = React.memo(TestimonialsSection);
-  const MemoizedTeamSection = React.memo(TeamSection);
   const MemoizedCtaSection = React.memo(CtaSection);
 
   return (
@@ -669,7 +677,6 @@ const Home = () => {
       <MemoizedFeaturedPropertiesSection />
       <MemoizedFeaturesSection />
       <MemoizedTestimonialsSection />
-      <MemoizedTeamSection />
       <MemoizedCtaSection />
       
       {/* Authentication Modal */}

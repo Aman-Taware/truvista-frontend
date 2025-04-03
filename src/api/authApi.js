@@ -74,7 +74,7 @@ const authApi = {
       throw error;
     }
   },
-
+  
   /**
    * Verify OTP and sign in
    * @param {string} contactNo - Phone number
@@ -140,7 +140,7 @@ const authApi = {
       throw error;
     }
   },
-
+  
   /**
    * Register a new user
    * @param {Object} userData - User registration data including phoneNumber, otp, name, email, etc.
@@ -202,7 +202,7 @@ const authApi = {
       throw error;
     }
   },
-
+  
   /**
    * Refresh authentication token
    * @returns {Promise<{token: string}>} - New access token
@@ -333,7 +333,7 @@ const authApi = {
       throw error;
     }
   },
-
+  
   /**
    * Check if access token is valid
    * @returns {Promise<boolean>} - True if token is valid

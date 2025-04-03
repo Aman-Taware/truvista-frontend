@@ -577,7 +577,7 @@ const PropertyDetail = () => {
               <div className="text-xl font-bold text-primary-700">
                 {formatPriceRange(property.minPrice, property.maxPrice)}*
               </div>
-              <span className="ml-1 text-xs text-gray-400 italic">Negotiable</span>
+              <span className="ml-1 text-xs text-gray-400 italic">All Inc.</span>
             </div>
           </Card.Header>
           

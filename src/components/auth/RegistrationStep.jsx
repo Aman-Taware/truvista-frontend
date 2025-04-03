@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Home, AlertCircle } from 'lucide-react';
 import Button from '../ui/Button';
+import { Link } from 'react-router-dom';
 import { FLAT_TYPES, PRICE_RANGES } from '../../constants/constants';
 
 /**
@@ -18,16 +19,20 @@ const RegistrationStep = ({
   // Field focus states
   const [focusedField, setFocusedField] = useState(null);
   
+  // Terms acceptance state
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  
   // Field-specific error states
   const [errors, setErrors] = useState({
     name: '',
     email: '',
-    general: ''
+    general: '',
+    terms: ''
   });
   
   // Clear errors when component remounts or message changes
   useEffect(() => {
-    setErrors({ name: '', email: '', general: '' });
+    setErrors({ name: '', email: '', general: '', terms: '' });
   }, [message?.type]);
   
   // Handle input changes
@@ -60,10 +65,18 @@ const RegistrationStep = ({
     });
   };
   
+  // Handle terms acceptance toggle
+  const handleTermsAcceptance = (e) => {
+    setTermsAccepted(e.target.checked);
+    if (e.target.checked && errors.terms) {
+      setErrors({ ...errors, terms: '' });
+    }
+  };
+  
   // Validate form before submission
   const validateForm = () => {
     let valid = true;
-    const newErrors = { name: '', email: '', general: '' };
+    const newErrors = { name: '', email: '', general: '', terms: '' };
     
     // Name validation
     if (!registrationData.name || registrationData.name.trim() === '') {
@@ -80,6 +93,12 @@ const RegistrationStep = ({
       valid = false;
     }
     
+    // Terms acceptance validation
+    if (!termsAccepted) {
+      newErrors.terms = 'You must accept the Terms of Service, Privacy Policy, and Cookie Policy to register';
+      valid = false;
+    }
+    
     setErrors(newErrors);
     return valid;
   };
@@ -93,6 +112,12 @@ const RegistrationStep = ({
     }
     
     try {
+      // Store acceptance in localStorage when user successfully submits the form
+      if (termsAccepted) {
+        localStorage.setItem('termsAccepted', 'true');
+        localStorage.setItem('cookieConsent', 'accepted');
+      }
+      
       onSubmit();
     } catch (error) {
       console.error('Registration error:', error);
@@ -270,25 +295,47 @@ const RegistrationStep = ({
         </div>
         
         {/* Submit button */}
-        <Button 
-          type="submit" 
-          className="w-full mt-4"
-          disabled={loading}
-          loading={loading}
-        >
-          {loading ? 'Creating Account...' : 'Complete Registration'}
-        </Button>
+        <div className="mt-6">
+          {/* Terms acceptance checkbox */}
+          <div className={`mb-4 ${errors.terms ? 'text-red-600' : ''}`}>
+            <label className="flex items-start cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={handleTermsAcceptance}
+                className={`mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 ${errors.terms ? 'border-red-300' : ''}`}
+              />
+              <span className="ml-2 text-sm">
+                I accept the <Link to="/terms" className="text-primary-600 hover:underline">Terms of Service</Link>, <Link to="/privacy" className="text-primary-600 hover:underline">Privacy Policy</Link>, and <Link to="/cookies" className="text-primary-600 hover:underline">Cookie Policy</Link>.
+              </span>
+            </label>
+            {errors.terms && (
+              <p className="text-sm text-red-600 mt-1">{errors.terms}</p>
+            )}
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={loading}
+            loading={loading}
+          >
+            {loading ? 'Creating Account...' : 'Complete Registration'}
+          </Button>
+        </div>
         
-        {/* Terms and privacy notice */}
+        {/* Terms and privacy notice - keeping this for added visibility */}
         <p className="text-xs text-center text-gray-500 mt-4">
           By registering, you agree to our{' '}
-          <a href="/terms" className="text-primary hover:underline">
+          <Link to="/terms" className="text-primary hover:underline">
             Terms of Service
-          </a>{' '}
-          and{' '}
-          <a href="/privacy" className="text-primary hover:underline">
+          </Link>,{' '}
+          <Link to="/privacy" className="text-primary hover:underline">
             Privacy Policy
-          </a>
+          </Link>, and{' '}
+          <Link to="/cookies" className="text-primary hover:underline">
+            Cookie Policy
+          </Link>
         </p>
       </form>
     </div>
