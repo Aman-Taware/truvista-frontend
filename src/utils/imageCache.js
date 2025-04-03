@@ -20,7 +20,7 @@ const getServiceWorkerRegistration = async () => {
   try {
     return await navigator.serviceWorker.ready;
   } catch (error) {
-    console.error('Error getting service worker registration:', error);
+    // console.error('Error getting service worker registration:', error);
     return null;
   }
 };
@@ -40,7 +40,7 @@ export const isImageCached = async (imageUrl) => {
     const cachedResponse = await cache.match(imageUrl);
     return !!cachedResponse;
   } catch (error) {
-    console.error('Error checking if image is cached:', error);
+    // console.error('Error checking if image is cached:', error);
     return false;
   }
 };
@@ -64,7 +64,7 @@ export const loadCachedImage = (imageUrl, preloadOnly = false) => {
     isImageCached(imageUrl).then(isCached => {
       if (isCached) {
         // Image is already cached
-        console.log('Image already cached:', imageUrl);
+        // console.log('Image already cached:', imageUrl);
         resolve(preloadOnly ? null : imageUrl);
       } else {
         // Image not cached, fetch it via the service worker
@@ -74,7 +74,7 @@ export const loadCachedImage = (imageUrl, preloadOnly = false) => {
           const isExternal = isExternalUrl(imageUrl);
           const fetchOptions = isExternal ? { mode: 'no-cors' } : {};
           
-          fetch(imageUrl, fetchOptions).catch(err => console.error('Error preloading image:', err));
+          fetch(imageUrl, fetchOptions).catch(err => {/* console.error('Error preloading image:', err) */});
           resolve(null);
         } else {
           // Wait for the image to be fetched
@@ -84,11 +84,11 @@ export const loadCachedImage = (imageUrl, preloadOnly = false) => {
           
           fetch(imageUrl, fetchOptions)
             .then(() => {
-              console.log('Image loaded into cache:', imageUrl);
+              // console.log('Image loaded into cache:', imageUrl);
               resolve(imageUrl);
             })
             .catch(error => {
-              console.error('Error loading image:', error);
+              // console.error('Error loading image:', error);
               // Still return the URL so it can be used as fallback
               resolve(imageUrl);
             });
@@ -105,7 +105,7 @@ const isExternalUrl = (url) => {
     const urlOrigin = new URL(url).origin;
     return currentOrigin !== urlOrigin;
   } catch (e) {
-    console.error('Error parsing URL:', e);
+    // console.error('Error parsing URL:', e);
     return false;
   }
 };
@@ -129,20 +129,20 @@ export const preloadImages = async (imageUrls) => {
         imageUrls
       });
       
-      console.log(`Requested caching of ${imageUrls.length} images`);
+      // console.log(`Requested caching of ${imageUrls.length} images`);
     } else {
       // If service worker not active, fetch images directly
-      console.log('Service worker not active, fetching images directly');
+      // console.log('Service worker not active, fetching images directly');
       
       // Fetch each image to trigger caching via fetch handler
       imageUrls.forEach(url => {
         loadCachedImage(url, true).catch(err => {
-          console.error('Error preloading image:', err);
+          // console.error('Error preloading image:', err);
         });
       });
     }
   } catch (error) {
-    console.error('Error preloading images:', error);
+    // console.error('Error preloading images:', error);
   }
 };
 
@@ -180,11 +180,11 @@ export const clearImageCache = async () => {
         return Promise.all(keys.map(key => cache.delete(key)));
       });
       
-      console.log('Cleared image cache directly');
+      // console.log('Cleared image cache directly');
       return true;
     }
   } catch (error) {
-    console.error('Error clearing image cache:', error);
+    // console.error('Error clearing image cache:', error);
     return false;
   }
 };
@@ -217,7 +217,7 @@ export const getCacheStats = async () => {
       size: totalSize
     };
   } catch (error) {
-    console.error('Error getting cache stats:', error);
+    // console.error('Error getting cache stats:', error);
     return { count: 0, size: 0 };
   }
 }; 

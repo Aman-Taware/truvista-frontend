@@ -21,27 +21,27 @@ const PRECACHE_RESOURCES = [
 
 // Install event - caches essential resources
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Installing...');
+  // console.log('[Service Worker] Installing...');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('[Service Worker] Pre-caching essential files');
+        // console.log('[Service Worker] Pre-caching essential files');
         return cache.addAll(PRECACHE_RESOURCES);
       })
       .then(() => {
-        console.log('[Service Worker] Pre-caching complete');
+        // console.log('[Service Worker] Pre-caching complete');
         return self.skipWaiting();
       })
       .catch(error => {
-        console.error('[Service Worker] Pre-caching failed:', error);
+        // console.error('[Service Worker] Pre-caching failed:', error);
       })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  console.log('[Service Worker] Activating...');
+  // console.log('[Service Worker] Activating...');
   
   const currentCaches = [CACHE_NAME, IMAGE_CACHE_NAME];
   
@@ -52,7 +52,7 @@ self.addEventListener('activate', event => {
       })
       .then(cachesToDelete => {
         return Promise.all(cachesToDelete.map(cacheToDelete => {
-          console.log('[Service Worker] Deleting old cache:', cacheToDelete);
+          // console.log('[Service Worker] Deleting old cache:', cacheToDelete);
           return caches.delete(cacheToDelete);
         }));
       })
@@ -85,7 +85,7 @@ function isExternalUrl(url) {
     const urlOrigin = new URL(url).origin;
     return currentOrigin !== urlOrigin;
   } catch (e) {
-    console.error('Error parsing URL:', e);
+    // console.error('Error parsing URL:', e);
     return false;
   }
 }
@@ -102,12 +102,12 @@ self.addEventListener('fetch', event => {
         return cache.match(event.request).then(cachedResponse => {
           // Return cached response if available
           if (cachedResponse) {
-            console.log('[Service Worker] Serving cached image:', event.request.url);
+            // console.log('[Service Worker] Serving cached image:', event.request.url);
             return cachedResponse;
           }
           
           // Otherwise fetch from network and cache
-          console.log('[Service Worker] Fetching image from network:', event.request.url);
+          // console.log('[Service Worker] Fetching image from network:', event.request.url);
           
           // Use no-cors mode for external URLs (like S3) until CORS is properly configured
           const fetchOptions = isExternalUrl(event.request.url) ? { mode: 'no-cors' } : {};
@@ -126,7 +126,7 @@ self.addEventListener('fetch', event => {
             
             // Cache the fresh response
             cache.put(event.request, clonedResponse).catch(error => {
-              console.error('[Service Worker] Error caching image:', error);
+              // console.error('[Service Worker] Error caching image:', error);
             });
             
             // Optionally trim the cache if it gets too large
@@ -134,7 +134,7 @@ self.addEventListener('fetch', event => {
             
             return networkResponse;
           }).catch(error => {
-            console.error('[Service Worker] Fetch error:', error);
+            // console.error('[Service Worker] Fetch error:', error);
             // Could return a fallback image here
           });
         });
@@ -154,11 +154,11 @@ self.addEventListener('fetch', event => {
 // Helper function to preload and cache images
 function cacheImages(imageUrls) {
   if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-    console.log('[Service Worker] No image URLs to cache');
+    // console.log('[Service Worker] No image URLs to cache');
     return;
   }
   
-  console.log('[Service Worker] Caching images:', imageUrls.length);
+  // console.log('[Service Worker] Caching images:', imageUrls.length);
   
   caches.open(IMAGE_CACHE_NAME).then(cache => {
     const cachePromises = imageUrls.map(url => {
@@ -168,7 +168,7 @@ function cacheImages(imageUrls) {
       // Check if already cached
       return cache.match(url).then(cachedResponse => {
         if (cachedResponse) {
-          console.log('[Service Worker] Image already cached:', url);
+          // console.log('[Service Worker] Image already cached:', url);
           return Promise.resolve();
         }
         
@@ -190,13 +190,13 @@ function cacheImages(imageUrls) {
             return cache.put(url, response);
           })
           .catch(error => {
-            console.error('[Service Worker] Error caching image:', url, error);
+            // console.error('[Service Worker] Error caching image:', url, error);
           });
       });
     });
     
     return Promise.all(cachePromises).then(() => {
-      console.log('[Service Worker] Batch caching complete');
+      // console.log('[Service Worker] Batch caching complete');
       trimCache(IMAGE_CACHE_NAME, MAX_IMAGE_CACHE_ITEMS);
     });
   });
@@ -210,11 +210,11 @@ function clearImageCache() {
       return caches.open(IMAGE_CACHE_NAME);
     })
     .then(() => {
-      console.log('[Service Worker] Image cache cleared');
+      // console.log('[Service Worker] Image cache cleared');
       return true;
     })
     .catch(error => {
-      console.error('[Service Worker] Failed to clear image cache:', error);
+      // console.error('[Service Worker] Failed to clear image cache:', error);
       return false;
     });
 }
@@ -234,7 +234,7 @@ async function trimCache(cacheName, maxItems) {
     await cache.delete(keys[i]);
   }
   
-  console.log(`[Service Worker] Trimmed ${itemsToDelete} items from ${cacheName}`);
+  // console.log(`[Service Worker] Trimmed ${itemsToDelete} items from ${cacheName}`);
 }
 
 // Listen for messages from the main thread
@@ -253,4 +253,4 @@ self.addEventListener('message', event => {
   }
 });
 
-console.log('[Service Worker] Service worker registered successfully'); 
+// console.log('[Service Worker] Service worker registered successfully'); 
