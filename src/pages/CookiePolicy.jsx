@@ -159,10 +159,10 @@ const CookiePolicy = () => {
                 
                 <h2 className="text-2xl font-display text-primary-700 mt-10 mb-4">9. Contact Us</h2>
                 <p>If you have any questions about our use of cookies or this Cookie Policy, please contact us at:</p>
-                <p className="mb-1">Truvista Realty</p>
-                <p className="mb-1">Email: privacy@truvista.in</p>
-                <p className="mb-1">Phone: +91-XXXXXXXXXX</p>
-                <p className="mb-5">Address: [Company Address], India</p>
+                <p className="mb-1">Truvista Team</p>
+                <p className="mb-1">Email: truvista25@gmail.com</p>
+                <p className="mb-1">Phone: +91-9158925160</p>
+                <p className="mb-5">Address: Moshi,Pune 412105</p>
               </div>
             </div>
           </Section>

@@ -51,8 +51,25 @@ const App = () => {
             {/* Main layout routes */}
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Home />} />
-              <Route path="properties" element={<Properties />} />
-              <Route path="properties/:id" element={<PropertyDetail />} />
+              
+              {/* Protected Properties Routes */}
+              <Route 
+                path="properties" 
+                element={
+                  <ProtectedRoute>
+                    <Properties />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="properties/:id" 
+                element={
+                  <ProtectedRoute>
+                    <PropertyDetail />
+                  </ProtectedRoute>
+                } 
+              />
+              
               <Route path="contact" element={<Contact />} />
               <Route path="about" element={<About />} />
               <Route path="terms" element={<TermsOfService />} />

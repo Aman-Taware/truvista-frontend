@@ -17,6 +17,11 @@ const Logo = ({ variant = 'dark', className = '', withTagline = false }) => {
   return (
     <div className={`font-display ${className}`}>
       <div className="flex items-center">
+        <img 
+          src="/logo png.png" 
+          alt="Truvista Logo" 
+          className="h-8 md:h-10 mr-2"
+        />
         <span className={`text-2xl md:text-3xl font-bold ${textColor}`}>
           Truvista
         </span>
