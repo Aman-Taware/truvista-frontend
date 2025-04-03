@@ -1,0 +1,21 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm use 20
+        - echo "Node version: $(node -v)"
+        - echo "NPM version: $(npm -v)"
+        - npm ci
+    build:
+      commands:
+        - echo "Starting build with Vite"
+        - npx vite build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .npm/**/* 
