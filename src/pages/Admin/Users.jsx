@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import adminApi from '../../api/adminApi';
 import { NotificationContext } from '../../contexts/NotificationContext';
@@ -17,6 +17,12 @@ const UsersPage = () => {
   
   // State for user deletion confirmation
   const [userToDelete, setUserToDelete] = useState(null);
+  
+  // Ref to store dropdown position state (above or below trigger)
+  const [dropdownPosition, setDropdownPosition] = useState('bottom');
+  
+  // Create refs to measure dropdown position
+  const dropdownRefs = useRef({});
   
   // States for pagination and filtering
   const [currentPage, setCurrentPage] = useState(0); // Changed to zero-based for backend compatibility
@@ -198,9 +204,31 @@ const UsersPage = () => {
     }
   };
 
-  // Toggle the dropdown menu
+  // Toggle the dropdown menu and check if it should appear above or below
   const toggleDropdown = (id) => {
-    setOpenDropdownId(openDropdownId === id ? null : id);
+    // If this dropdown is already open, close it
+    if (openDropdownId === id) {
+      setOpenDropdownId(null);
+      return;
+    }
+    
+    // Check if the dropdown would be cut off at the bottom
+    const dropdownTrigger = dropdownRefs.current[`trigger-${id}`];
+    if (dropdownTrigger) {
+      const rect = dropdownTrigger.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const bottomSpace = viewportHeight - rect.bottom;
+      
+      // If there's not enough space below (less than 250px), show above
+      if (bottomSpace < 250) {
+        setDropdownPosition('top');
+      } else {
+        setDropdownPosition('bottom');
+      }
+    }
+    
+    // Open the dropdown
+    setOpenDropdownId(id);
   };
   
   // Format user statistics for display
@@ -516,6 +544,7 @@ const UsersPage = () => {
                               type="button"
                               className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none"
                               onClick={() => toggleDropdown(user.id)}
+                              ref={el => dropdownRefs.current[`trigger-${user.id}`] = el}
                             >
                               Actions
                               <svg className="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -523,9 +552,11 @@ const UsersPage = () => {
                               </svg>
                             </button>
                             <div 
-                              className={`absolute right-0 z-10 mt-1 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
+                              className={`absolute z-10 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
                                 openDropdownId === user.id ? 'block' : 'hidden'
-                              }`} 
+                              } ${
+                                dropdownPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
+                              } right-0`} 
                               role="menu" 
                               aria-orientation="vertical"
                             >
@@ -625,15 +656,18 @@ const UsersPage = () => {
                           type="button"
                           className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100"
                           onClick={() => toggleDropdown(user.id)}
+                          ref={el => dropdownRefs.current[`trigger-${user.id}`] = el}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
                           </svg>
                         </button>
                         <div 
-                          className={`absolute right-0 z-10 mt-1 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
+                          className={`absolute z-10 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
                             openDropdownId === user.id ? 'block' : 'hidden'
-                          }`} 
+                          } ${
+                            dropdownPosition === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
+                          } right-0`} 
                           role="menu" 
                           aria-orientation="vertical"
                         >
