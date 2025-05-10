@@ -50,8 +50,8 @@ const BookingsPage = () => {
     
     try {
       bookingsFetchingRef.current = true;
-      setLoading(true);
-      
+        setLoading(true);
+        
       // Add a timestamp to prevent cache issues and avoid duplicate request cancellation
       const timestamp = Date.now();
       const response = await bookingApi.getUserBookings({ _t: timestamp });
@@ -119,7 +119,7 @@ const BookingsPage = () => {
       
       setBookings([]);
     } finally {
-      setLoading(false);
+          setLoading(false);
       bookingsFetchingRef.current = false;
     }
   }, [isAuthenticated, showNotification]);
@@ -129,8 +129,8 @@ const BookingsPage = () => {
     if (isAuthenticated) {
       fetchBookings();
     } else {
-      setLoading(false);
-    }
+        setLoading(false);
+      }
   }, [isAuthenticated, fetchBookings]);
   
   // Handle viewing a property
@@ -243,10 +243,10 @@ const BookingsPage = () => {
       
       closeRescheduleModal();
       
-      showNotification({
-        type: 'success',
+        showNotification({
+          type: 'success',
         message: 'Your booking has been rescheduled and is pending confirmation.'
-      });
+        });
     } catch (error) {
       console.error('Error rescheduling booking:', error);
       setRescheduleModal({
@@ -271,7 +271,7 @@ const BookingsPage = () => {
       </div>
     );
   }
-
+  
   // Make sure bookings is always an array
   const actualBookings = bookings || [];
   console.log("Bookings to render:", actualBookings);
@@ -300,7 +300,7 @@ const BookingsPage = () => {
       default: return 'bg-neutral-500';
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-neutral-50 py-8">
       <Container>
@@ -338,8 +338,8 @@ const BookingsPage = () => {
                 Browse Properties
               </Button>
             </div>
-          </div>
-        ) : (
+            </div>
+          ) : (
           <div className="space-y-6">
             {statusOrder.map(status => {
               const statusBookings = groupedBookings[status] || [];
@@ -395,8 +395,8 @@ const BookingsPage = () => {
                               <span className="font-medium text-neutral-800 text-xs">
                                 {visitDate ? formatDate(visitDate) : 'Date pending'}
                                 {visitTime ? `, ${visitTime}` : ''}
-                              </span>
-                            </div>
+                          </span>
+                        </div>
                             <BookingStatusBadge status={booking.status} className="ml-1 text-[10px] px-1.5 py-0.5" />
                           </div>
                           
@@ -410,8 +410,8 @@ const BookingsPage = () => {
                               >
                                 {propertyName}
                               </h3>
-                            </div>
-                            
+                      </div>
+                      
                             
                             {/* Compact Action Buttons */}
                             <div className="flex justify-between border-t border-neutral-100 pt-2 mt-1">
@@ -421,21 +421,21 @@ const BookingsPage = () => {
                                 size="xs"
                                 className="text-xs flex-1 mr-2"
                               >
-                                View Property
-                              </Button>
-                              
+                            View Property
+                          </Button>
+                        
                               {canChangeDate && bookingId && (
-                                <Button 
+                          <Button
                                   onClick={() => handleReschedule(bookingId, visitDate)}
                                   variant="outline"
                                   size="xs"
                                   className="text-xs flex-1"
                                 >
                                   Reschedule
-                                </Button>
-                              )}
-                            </div>
-                          </div>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                         </div>
                       );
                     })}
@@ -443,8 +443,8 @@ const BookingsPage = () => {
                 </div>
               );
             })}
-          </div>
-        )}
+            </div>
+          )}
         
         {/* Navigation Links */}
         <div className="mt-8 pt-4 border-t border-neutral-200 text-center">

@@ -433,9 +433,9 @@ export const AuthProvider = ({ children }) => {
         success: false, 
         message: error.message || 'Failed to send OTP. Please try again.' 
       };
-    } finally {
-      setLoading(false);
-    }
+      } finally {
+        setLoading(false);
+      }
   }, []);
 
   /**
@@ -662,7 +662,7 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     registerUser
   };
-  
+
   return (
     <AuthContext.Provider value={contextValue}>
       {children}

@@ -15,6 +15,9 @@ const UsersPage = () => {
   // Add state to track which dropdown is open
   const [openDropdownId, setOpenDropdownId] = useState(null);
   
+  // State for user deletion confirmation
+  const [userToDelete, setUserToDelete] = useState(null);
+  
   // States for pagination and filtering
   const [currentPage, setCurrentPage] = useState(0); // Changed to zero-based for backend compatibility
   const [totalPages, setTotalPages] = useState(0);
@@ -169,6 +172,28 @@ const UsersPage = () => {
       showNotification({
         type: 'error',
         message: 'Failed to update user role. Please try again.'
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await adminApi.deleteUser(userId);
+      showNotification({
+        type: 'success',
+        message: `User "${userName}" has been deleted successfully`
+      });
+      fetchUsers(); // Refresh the user list
+      fetchUserStats(); // Refresh the stats
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      showNotification({
+        type: 'error',
+        message: 'Failed to delete user. Please try again.'
       });
     }
   };
@@ -549,6 +574,17 @@ const UsersPage = () => {
                                 >
                                   {user.active ? 'Deactivate' : 'Activate'}
                                 </button>
+                                <div className="border-t border-gray-100 my-1"></div>
+                                <button
+                                  onClick={() => {
+                                    handleDeleteUser(user.id, user.name);
+                                    setOpenDropdownId(null);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50"
+                                  role="menuitem"
+                                >
+                                  Delete User
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -645,6 +681,17 @@ const UsersPage = () => {
                               }`}
                             >
                               {user.active ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <div className="border-t border-gray-100 my-1"></div>
+                            <button
+                              onClick={() => {
+                                handleDeleteUser(user.id, user.name);
+                                setOpenDropdownId(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50"
+                              role="menuitem"
+                            >
+                              Delete User
                             </button>
                           </div>
                         </div>

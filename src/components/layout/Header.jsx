@@ -128,7 +128,7 @@ const Header = () => {
             {isAuthenticated() && (
               <>
                 <MobileNavLink to="/properties" onClick={() => setMobileMenuOpen(false)}>Properties</MobileNavLink>
-                <MobileNavLink to="/user/bookings" onClick={() => setMobileMenuOpen(false)}>Bookings</MobileNavLink>
+                <MobileNavLink to="/user/bookings" onClick={() => setMobileMenuOpen(false)}>Scheduled Visit</MobileNavLink>
                 <MobileNavLink to="/user/shortlist" onClick={() => setMobileMenuOpen(false)}>Shortlist</MobileNavLink>
                 <MobileNavLink to="/user/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileNavLink>
                 {isAdmin() && (
