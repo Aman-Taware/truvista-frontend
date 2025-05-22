@@ -404,75 +404,77 @@ const Home = () => {
     </Modal>
   );
 
-  // Features Section Component
-  const FeaturesSection = () => (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-800 mb-4 font-display">
-            Why Choose Truvista
-          </h2>
-          <p className="max-w-2xl mx-auto text-neutral-600">
-            Experience the difference with our premium real estate services
-          </p>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            {
-              icon: (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              ),
-              title: "Trusted Excellence",
-              description: "20+ years of delivering exceptional luxury real estate services"
-            },
-            {
-              icon: (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              ),
-              title: "24/7 Premium Support",
-              description: "Round-the-clock assistance from our dedicated team of professionals"
-            },
-            {
-              icon: (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              ),
-              title: "Expert Guidance",
-              description: "Professional advice from industry leaders with deep local knowledge"
-            },
-            {
-              icon: (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              ),
-              title: "Curated Selection",
-              description: "Handpicked properties meeting our rigorous standards of excellence"
-            }
-          ].map((feature, index) => (
-            <div 
-              key={index}
-              className="text-center bg-white shadow-elegant rounded-lg p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 transform"
-            >
-              <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 text-primary-600">
-                {feature.icon}
-              </div>
-              <h3 className="text-lg font-semibold mb-3 text-primary-800">{feature.title}</h3>
-              <p className="text-neutral-600 text-sm">
-                {feature.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  // Features Section Component
+  // const FeaturesSection = () => (
+  //   <section className="py-20 bg-white">
+  //     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  //       <div className="text-center mb-16">
+  //         <h2 className="text-3xl md:text-4xl font-bold text-primary-800 mb-4 font-display">
+  //           Why Choose Truvista
+  //         </h2>
+  //         <p className="max-w-2xl mx-auto text-neutral-600">
+  //           Experience the difference with our premium real estate services
+  //         </p>
+  //       </div>
+
+  //       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+  //         {[
+  //           {
+  //             icon: (
+  //               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  //               </svg>
+  //             ),
+  //             title: "Trusted Excellence",
+  //             description: "20+ years of delivering exceptional luxury real estate services"
+  //           },
+  //           {
+  //             icon: (
+  //               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  //               </svg>
+  //             ),
+  //             title: "24/7 Premium Support",
+  //             description: "Round-the-clock assistance from our dedicated team of professionals"
+  //           },
+  //           {
+  //             icon: (
+  //               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+  //               </svg>
+  //             ),
+  //             title: "Expert Guidance",
+  //             description: "Professional advice from industry leaders with deep local knowledge"
+  //           },
+  //           {
+  //             icon: (
+  //               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  //                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  //               </svg>
+  //             ),
+  //             title: "Curated Selection",
+  //             description: "Handpicked properties meeting our rigorous standards of excellence"
+  //           }
+  //         ].map((feature, index) => (
+  //           <div 
+  //             key={index}
+  //             className="text-center bg-white shadow-elegant rounded-lg p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 transform"
+  //           >
+  //             <div className="bg-primary-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 text-primary-600">
+  //               {feature.icon}
+  //             </div>
+  //             <h3 className="text-lg font-semibold mb-3 text-primary-800">{feature.title}</h3>
+  //             <p className="text-neutral-600 text-sm">
+  //               {feature.description}
+  //             </p>
+  //           </div>
+  //         ))}
+  //       </div>
+  //     </div>
+  //   </section>
+  // );
+
 
   // Featured Properties Section
   const FeaturedPropertiesSection = () => (
@@ -542,71 +544,71 @@ const Home = () => {
   );
 
   // Testimonials Section
-  const TestimonialsSection = () => (
-    <section className="py-24 bg-neutral-50 relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-800/5 to-primary-600/5"></div>
+  // const TestimonialsSection = () => (
+  //   <section className="py-24 bg-neutral-50 relative">
+  //     <div className="absolute inset-0 bg-gradient-to-br from-primary-800/5 to-primary-600/5"></div>
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-800 mb-4 font-display">
-            What Our Clients Say
-          </h2>
-          <p className="max-w-2xl mx-auto text-neutral-600">
-            Discover why our clients trust us for their real estate needs
-          </p>
-        </div>
+  //     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+  //       <div className="text-center mb-16">
+  //         <h2 className="text-3xl md:text-4xl font-bold text-primary-800 mb-4 font-display">
+  //           What Our Clients Say
+  //         </h2>
+  //         <p className="max-w-2xl mx-auto text-neutral-600">
+  //           Discover why our clients trust us for their real estate needs
+  //         </p>
+  //       </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              name: 'Aditya Sathe',
-              role: 'Property Buyer',
-              content: 'Truvista helped me find the perfect home for my family. Their attention to detail and understanding of our needs made the process seamless and enjoyable.',
-              avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-            },
-            {
-              name: 'Siddhi Lonari',
-              role: 'Property Investor',
-              content: "I've used Truvista for multiple investment properties. Their market insights and property selections have consistently delivered excellent returns on my investments.",
-              avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
-            },
-            {
-              name: 'Rahul Mehta',
-              role: 'First-time Buyer',
-              content: "As a first-time buyer, I was nervous about the process. Truvista's team guided me every step of the way, from financing options to final documentation. Highly recommended!",
-              avatar: 'https://randomuser.me/api/portraits/men/67.jpg'
-            }
-          ].map((testimonial, index) => (
-            <div 
-              key={index}
-              className="bg-white p-8 rounded-xl shadow-elegant hover:shadow-lg transition-all duration-300 relative"
-            >
-              <div className="absolute top-6 right-8 text-secondary-300">
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                  <path d="M11.192 15.757c0-.88-.23-1.618-.69-2.217-.326-.412-.768-.683-1.327-.812-.55-.128-1.07-.137-1.54-.028-.16-.95.1-1.95.78-3 .53-.81 1.24-1.48 2.13-2 .33-.2.58-.6.58-.98 0-.06 0-.12-.03-.18-.07-.21-.21-.36-.38-.43-.21-.09-.47-.09-.7.05-2.14 1.23-3.74 3.07-4.54 5.18-.35.95-.5 1.95-.5 2.97 0 1.1.29 2.2.89 3.14.58.92 1.39 1.56 2.4 1.89.44.15.88.22 1.33.22.76 0 1.51-.22 2.14-.65.71-.49 1.27-1.21 1.56-2.05.2-.62.31-1.28.31-1.94 0-.06 0-.11-.01-.16z" />
-                  <path d="M21.048 15.757c0-.88-.23-1.618-.69-2.217-.326-.42-.768-.683-1.327-.812-.55-.128-1.066-.137-1.54-.028-.16-.95.1-1.95.78-3 .53-.81 1.24-1.48 2.13-2 .33-.2.58-.6.58-.98 0-.06 0-.12-.03-.18-.07-.21-.21-.36-.38-.43-.21-.09-.47-.09-.7.05-2.14 1.23-3.74 3.07-4.54 5.18-.35.95-.5 1.95-.5 2.97 0 1.1.29 2.2.89 3.14.58.92 1.39 1.56 2.4 1.89.44.15.88.22 1.33.22.76 0 1.51-.22 2.14-.65.71-.49 1.27-1.21 1.56-2.05.2-.62.31-1.28.31-1.94 0-.06 0-.11-.01-.16z" />
-                </svg>
-              </div>
+  //       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+  //         {[
+  //           {
+  //             name: 'Aditya Sathe',
+  //             role: 'Property Buyer',
+  //             content: 'Truvista helped me find the perfect home for my family. Their attention to detail and understanding of our needs made the process seamless and enjoyable.',
+  //             avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+  //           },
+  //           {
+  //             name: 'Siddhi Lonari',
+  //             role: 'Property Investor',
+  //             content: "I've used Truvista for multiple investment properties. Their market insights and property selections have consistently delivered excellent returns on my investments.",
+  //             avatar: 'https://randomuser.me/api/portraits/women/44.jpg'
+  //           },
+  //           {
+  //             name: 'Rahul Mehta',
+  //             role: 'First-time Buyer',
+  //             content: "As a first-time buyer, I was nervous about the process. Truvista's team guided me every step of the way, from financing options to final documentation. Highly recommended!",
+  //             avatar: 'https://randomuser.me/api/portraits/men/67.jpg'
+  //           }
+  //         ].map((testimonial, index) => (
+  //           <div 
+  //             key={index}
+  //             className="bg-white p-8 rounded-xl shadow-elegant hover:shadow-lg transition-all duration-300 relative"
+  //           >
+  //             <div className="absolute top-6 right-8 text-secondary-300">
+  //               <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+  //                 <path d="M11.192 15.757c0-.88-.23-1.618-.69-2.217-.326-.412-.768-.683-1.327-.812-.55-.128-1.07-.137-1.54-.028-.16-.95.1-1.95.78-3 .53-.81 1.24-1.48 2.13-2 .33-.2.58-.6.58-.98 0-.06 0-.12-.03-.18-.07-.21-.21-.36-.38-.43-.21-.09-.47-.09-.7.05-2.14 1.23-3.74 3.07-4.54 5.18-.35.95-.5 1.95-.5 2.97 0 1.1.29 2.2.89 3.14.58.92 1.39 1.56 2.4 1.89.44.15.88.22 1.33.22.76 0 1.51-.22 2.14-.65.71-.49 1.27-1.21 1.56-2.05.2-.62.31-1.28.31-1.94 0-.06 0-.11-.01-.16z" />
+  //                 <path d="M21.048 15.757c0-.88-.23-1.618-.69-2.217-.326-.42-.768-.683-1.327-.812-.55-.128-1.066-.137-1.54-.028-.16-.95.1-1.95.78-3 .53-.81 1.24-1.48 2.13-2 .33-.2.58-.6.58-.98 0-.06 0-.12-.03-.18-.07-.21-.21-.36-.38-.43-.21-.09-.47-.09-.7.05-2.14 1.23-3.74 3.07-4.54 5.18-.35.95-.5 1.95-.5 2.97 0 1.1.29 2.2.89 3.14.58.92 1.39 1.56 2.4 1.89.44.15.88.22 1.33.22.76 0 1.51-.22 2.14-.65.71-.49 1.27-1.21 1.56-2.05.2-.62.31-1.28.31-1.94 0-.06 0-.11-.01-.16z" />
+  //               </svg>
+  //             </div>
             
-              <p className="text-neutral-700 italic mb-6 pt-4">{testimonial.content}</p>
+  //             <p className="text-neutral-700 italic mb-6 pt-4">{testimonial.content}</p>
               
-              <div className="flex items-center mt-6">
-                <img 
-                  src={testimonial.avatar} 
-                  alt={testimonial.name} 
-                  className="w-12 h-12 rounded-full mr-4 border-2 border-secondary-100" 
-                />
-                <div>
-                  <p className="font-semibold text-primary-800">{testimonial.name}</p>
-                  <p className="text-neutral-500 text-sm">{testimonial.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  //             <div className="flex items-center mt-6">
+  //               <img 
+  //                 src={testimonial.avatar} 
+  //                 alt={testimonial.name} 
+  //                 className="w-12 h-12 rounded-full mr-4 border-2 border-secondary-100" 
+  //               />
+  //               <div>
+  //                 <p className="font-semibold text-primary-800">{testimonial.name}</p>
+  //                 <p className="text-neutral-500 text-sm">{testimonial.role}</p>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         ))}
+  //       </div>
+  //     </div>
+  //   </section>
+  // );
 
   // CTA Section
   const CtaSection = () => (
@@ -667,16 +669,16 @@ const Home = () => {
   // Memoize the main sections to prevent unnecessary re-renders
   const MemoizedHeroSection = React.memo(HeroSection);
   const MemoizedFeaturedPropertiesSection = React.memo(FeaturedPropertiesSection);
-  const MemoizedFeaturesSection = React.memo(FeaturesSection);
-  const MemoizedTestimonialsSection = React.memo(TestimonialsSection);
+  // const MemoizedFeaturesSection = React.memo(FeaturesSection);
+  // const MemoizedTestimonialsSection = React.memo(TestimonialsSection);
   const MemoizedCtaSection = React.memo(CtaSection);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
       <MemoizedHeroSection />
       <MemoizedFeaturedPropertiesSection />
-      <MemoizedFeaturesSection />
-      <MemoizedTestimonialsSection />
+      {/* <MemoizedFeaturesSection />
+      <MemoizedTestimonialsSection /> */}
       <MemoizedCtaSection />
       
       {/* Authentication Modal */}
