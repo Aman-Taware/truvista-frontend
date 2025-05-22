@@ -750,7 +750,7 @@ const PropertyDetail = () => {
                 <h2 className="text-base font-display  text-primary-900 font-bold mb-2">
                   About {property.name}
                 </h2>
-                <div className="text-sm text-neutral-900 font-medium leading-relaxed">
+                <div className="text-sm text-neutral-900 font-medium leading-relaxed ">
                   {property.description}
                 </div>
               </Card>
@@ -814,25 +814,7 @@ const PropertyDetail = () => {
             )}
 
             {/* Amenities */}
-            {property.amenities && property.amenities.length > 0 && (
-              <Card variant="elegant" className="mb-3">
-                <h2 className="text-base font-display font-bold text-primary-900 mb-2">
-                  Amenities
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
-                  {property.amenities.map((amenity, index) => (
-                    <div key={index} className="flex items-center text-xs">
-                      <div className="w-4 h-4 flex items-center justify-center bg-primary-50 rounded-full mr-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span className="text-neutral-900 font-medium">{amenity}</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+
           </div>
 
           <div className="lg:col-span-1">
@@ -852,6 +834,26 @@ const PropertyDetail = () => {
                 </div>
               </Card>
             )}
+
+            {property.amenities && property.amenities.length > 0 && (
+              <Card variant="elegant" className="mb-3">
+                <h2 className="text-base font-display font-bold text-primary-900 mb-2">
+                  Amenities
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
+                  {property.amenities.map((amenity, index) => (
+                    <div key={index} className="flex items-center text-xs">
+                      <div className="w-4 h-4 flex items-center justify-center bg-primary-50 rounded-full mr-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-neutral-900 font-medium">{amenity}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}            
 
             {/* Property QR Code */}
             <Card variant="elegant" className="mb-3">
