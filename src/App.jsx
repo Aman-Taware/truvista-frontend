@@ -30,7 +30,7 @@ import AdminDashboard from './pages/Admin/Dashboard';
 import AdminProperties from './pages/Admin/Properties';
 import AdminBookings from './pages/Admin/Bookings';
 import UsersPage from './pages/Admin/Users';
-import DirectionRequestsPage from "./pages/admin/DirectionRequests";
+import DirectionRequestsPage from './pages/Admin/DirectionRequests';
 import AdminSettings from './pages/Admin/Settings';
 import CreateProperty from './pages/Admin/CreateProperty';
 import EditProperty from './pages/Admin/EditProperty';
