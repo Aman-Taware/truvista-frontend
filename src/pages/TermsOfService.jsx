@@ -1,7 +1,7 @@
 import React from 'react';
 import Container from '../components/ui/Container';
 import { Section } from '../components/ui/Container';
-import { Helmet } from 'react-helmet';
+
 
 /**
  * Terms of Service Page Component
@@ -10,10 +10,7 @@ import { Helmet } from 'react-helmet';
 const TermsOfService = () => {
   return (
     <>
-      <Helmet>
-        <title>Terms of Service | Truvista</title>
-        <meta name="description" content="Terms and conditions for using the Truvista real estate platform" />
-      </Helmet>
+
       
       <div className="pt-20 pb-12 bg-white">
         <Container>

@@ -1,13 +1,9 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
+
 
 const Contact = () => {
   return (
     <div className="min-h-screen bg-neutral-50 pt-16 pb-20">
-      <Helmet>
-        <title>Contact Us | Truvista</title>
-        <meta name="description" content="Get in touch with our luxury real estate experts at Truvista. Find our contact information including address, phone numbers, and email addresses." />
-      </Helmet>
       
       <div className="bg-primary-900 py-12 mb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -1,7 +1,7 @@
 import React from 'react';
 import Container from '../components/ui/Container';
 import { Section } from '../components/ui/Container';
-import { Helmet } from 'react-helmet';
+
 
 /**
  * Cookie Policy Page Component
@@ -10,10 +10,7 @@ import { Helmet } from 'react-helmet';
 const CookiePolicy = () => {
   return (
     <>
-      <Helmet>
-        <title>Cookie Policy | Truvista</title>
-        <meta name="description" content="Cookie policy for the Truvista real estate platform" />
-      </Helmet>
+
       
       <div className="pt-20 pb-12 bg-white">
         <Container>

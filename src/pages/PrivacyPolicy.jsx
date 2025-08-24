@@ -1,7 +1,7 @@
 import React from 'react';
 import Container from '../components/ui/Container';
 import { Section } from '../components/ui/Container';
-import { Helmet } from 'react-helmet';
+
 
 /**
  * Privacy Policy Page Component
@@ -10,10 +10,7 @@ import { Helmet } from 'react-helmet';
 const PrivacyPolicy = () => {
   return (
     <>
-      <Helmet>
-        <title>Privacy Policy | Truvista</title>
-        <meta name="description" content="Privacy policy for the Truvista real estate platform" />
-      </Helmet>
+
       
       <div className="pt-20 pb-12 bg-white">
         <Container>
