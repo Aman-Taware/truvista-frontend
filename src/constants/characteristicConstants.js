@@ -1,0 +1,15 @@
+export const PREDEFINED_CHARACTERISTIC_KEYS = [
+  'Total land parcel',
+  'Total buildings',
+  'Total floors',
+  'Flats per floor',
+  'Total lifts',
+  'Availability',
+  'Floor rise charges',
+  'Builder Possession',
+  'Rera Possession',
+  'Project in JV',
+  'Mhada flats',
+  'USP of projects',
+  'Amenities',
+];
