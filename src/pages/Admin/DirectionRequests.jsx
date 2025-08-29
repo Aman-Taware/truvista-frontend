@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import adminApi from '../../api/adminApi';
 import { NotificationContext } from '../../contexts/NotificationContext';
@@ -16,6 +16,11 @@ const DirectionRequestsPage = () => {
     startDate: '',
     endDate: '',
   });
+  
+  // Search State
+  const [propertySearch, setPropertySearch] = useState('');
+  const [showPropertyDropdown, setShowPropertyDropdown] = useState(false);
+  const dropdownRef = useRef(null);
   const [sortBy, setSortBy] = useState('requestedAt');
   const [sortDir, setSortDir] = useState('desc');
 
@@ -78,6 +83,30 @@ const DirectionRequestsPage = () => {
     fetchProperties();
   }, [fetchProperties]);
 
+  // Set initial property search value when property is selected
+  useEffect(() => {
+    if (filters.propertyId && properties.length > 0) {
+      const selectedProperty = properties.find(prop => prop.id.toString() === filters.propertyId.toString());
+      if (selectedProperty && !propertySearch) {
+        setPropertySearch(selectedProperty.name);
+      }
+    }
+  }, [filters.propertyId, properties, propertySearch]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowPropertyDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     const debouncedFetch = debounce(() => fetchDirectionRequests(), 500);
     debouncedFetch();
@@ -96,9 +125,34 @@ const DirectionRequestsPage = () => {
       startDate: '',
       endDate: '',
     });
+    setPropertySearch('');
+    setShowPropertyDropdown(false);
     setSortBy('requestedAt');
     setSortDir('desc');
     setCurrentPage(0);
+  };
+
+  // Filter properties based on search
+  const filteredProperties = properties.filter(prop => 
+    prop.name.toLowerCase().includes(propertySearch.toLowerCase())
+  );
+
+  const handlePropertySelect = (property) => {
+    setFilters(prev => ({ ...prev, propertyId: property.id }));
+    setPropertySearch(property.name);
+    setShowPropertyDropdown(false);
+    setCurrentPage(0);
+  };
+
+  const handlePropertySearchChange = (e) => {
+    const value = e.target.value;
+    setPropertySearch(value);
+    setShowPropertyDropdown(true);
+    
+    // If search is cleared, clear the filter
+    if (!value) {
+      setFilters(prev => ({ ...prev, propertyId: '' }));
+    }
   };
 
   const handlePageChange = (newPage) => {
@@ -131,20 +185,64 @@ const DirectionRequestsPage = () => {
         {/* Filters */}
         <div className="mb-4 p-4 bg-gray-50 rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label htmlFor="propertyId" className="block text-sm font-medium text-gray-700">Property</label>
-              <select
-                id="propertyId"
-                name="propertyId"
-                value={filters.propertyId}
-                onChange={handleFilterChange}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                <option value="">All Properties</option>
-                {properties.map(prop => (
-                  <option key={prop.id} value={prop.id}>{prop.name}</option>
-                ))}
-              </select>
+            <div className="relative" ref={dropdownRef}>
+              <label htmlFor="propertySearch" className="block text-sm font-medium text-gray-700">Property</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="propertySearch"
+                  value={propertySearch}
+                  onChange={handlePropertySearchChange}
+                  onFocus={() => setShowPropertyDropdown(true)}
+                  placeholder="Search properties..."
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Search dropdown */}
+              {showPropertyDropdown && (
+                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                  <div 
+                    className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white"
+                    onClick={() => {
+                      setFilters(prev => ({ ...prev, propertyId: '' }));
+                      setPropertySearch('');
+                      setShowPropertyDropdown(false);
+                      setCurrentPage(0);
+                    }}
+                  >
+                    <span className="block truncate font-normal">All Properties</span>
+                  </div>
+                  {filteredProperties.map((prop) => (
+                    <div
+                      key={prop.id}
+                      className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white"
+                      onClick={() => handlePropertySelect(prop)}
+                    >
+                      <span className={`block truncate ${filters.propertyId === prop.id ? 'font-semibold' : 'font-normal'}`}>
+                        {prop.name}
+                      </span>
+                      {filters.propertyId === prop.id && (
+                        <span className="absolute inset-y-0 right-0 flex items-center pr-4">
+                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {filteredProperties.length === 0 && propertySearch && (
+                    <div className="cursor-default select-none relative py-2 pl-3 pr-9 text-gray-700">
+                      No properties found
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Start Date</label>

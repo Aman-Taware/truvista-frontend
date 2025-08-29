@@ -15,7 +15,7 @@ const PropertyDetails = ({ characteristics }) => {
         {characteristics.map((char, index) => (
           <div key={index} className="p-2 flex justify-between items-center">
             <div className="text-xs text-neutral-900 font-medium">{char.keyName}</div>
-            <div className="text-xs text-neutral-800">{char.value}</div>
+            <div className="text-xs text-neutral-800">{char.valueName}</div>
           </div>
         ))}
       </div>

@@ -76,31 +76,30 @@ const PropertyLocation = ({ property, onGetDirections }) => {
             ))}
           </div>
 
-          {/* Landmark List */}
-          <div className="space-y-4">
-            {filteredLandmarks.length > 0 ? (
-              filteredLandmarks.map(landmark => (
-                <div key={landmark.id} className="p-4 bg-neutral-50 rounded-lg border border-neutral-200 flex items-center">
-                  <div className="flex-grow pr-4">
-                    <p className="text-xs font-medium text-neutral-500">Name</p>
-                    <p className="font-semibold text-sm text-neutral-800">{landmark.name}</p>
+          {/* Landmark Table */}
+          {filteredLandmarks.length > 0 ? (
+            <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+              {/* Table Header */}
+              <div className="bg-neutral-100 px-4 py-2 grid grid-cols-3 gap-4 border-b border-neutral-200">
+                <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Name</div>
+                <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide text-center">Distance</div>
+                <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide text-center">Time</div>
+              </div>
+              
+              {/* Table Body */}
+              <div className="divide-y divide-neutral-100">
+                {filteredLandmarks.map(landmark => (
+                  <div key={landmark.id} className="px-4 py-2 grid grid-cols-3 gap-4 hover:bg-neutral-50 transition-colors">
+                    <div className="text-sm font-medium text-neutral-800">{landmark.name}</div>
+                    <div className="text-sm text-primary-700 font-semibold text-center">{landmark.distanceInKm} km</div>
+                    <div className="text-sm text-secondary-600 font-semibold text-center">~{landmark.timeInMinutes} min</div>
                   </div>
-                  <div className="text-right flex items-baseline space-x-4">
-                    <div>
-                      <p className="text-xs font-medium text-neutral-500">Distance</p>
-                      <p className="font-bold text-sm text-primary-700">{landmark.distanceInKm} km</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-neutral-500">Time</p>
-                      <p className="font-bold text-sm text-secondary-600">~{landmark.timeInMinutes} min</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-neutral-500 text-center py-4">No landmarks of this type found.</p>
-            )}
-          </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-neutral-500 text-center py-4">No landmarks of this type found.</p>
+          )}
         </div>
       )}
     </div>
