@@ -393,13 +393,6 @@ const PropertyDetail = () => {
           </Button>
         </div>
 
-            {/* Location & Landmarks Section */}
-            {property.latitude && property.longitude && (
-              <div className="mt-8">
-                <PropertyLocation property={property} onGetDirections={handleGetDirections} />
-              </div>
-            )}
-
         {/* Main Content Grid - More compact */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <div className="lg:col-span-2">
@@ -411,12 +404,26 @@ const PropertyDetail = () => {
               activeFlatType={activeFlatType}
               setActiveFlatType={setActiveFlatType}
             />
+
+            {/* Location & Landmarks Section - Desktop: Below AvailableFlats */}
+            {property.latitude && property.longitude && (
+              <div className="hidden lg:block">
+                <PropertyLocation property={property} onGetDirections={handleGetDirections} />
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-1">
             <PropertyDetails characteristics={property.characteristics} />
 
             <PropertyAmenities amenities={property.amenities} />
+
+            {/* Location & Landmarks Section - Mobile: Above PropertyQRCode */}
+            {property.latitude && property.longitude && (
+              <div className="block lg:hidden">
+                <PropertyLocation property={property} onGetDirections={handleGetDirections} />
+              </div>
+            )}
 
             <PropertyQRCode 
               name={property.name}
