@@ -33,11 +33,11 @@ const PropertyLocation = ({ property, onGetDirections }) => {
   }
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border border-neutral-200 my-6">
-      <h2 className="text-2xl font-bold text-primary-800 mb-5">Location & Nearby</h2>
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border border-neutral-200 mb-3">
+      <h2 className="text-base font-display font-semibold text-primary-900 mb-2">Location & Nearby</h2>
       
       {/* Map Section */}
-      <div className="relative h-80 w-full rounded-lg overflow-hidden mb-6 border-2 border-neutral-300 shadow-inner z-0">
+      <div className="relative h-64 lg:h-80 w-full rounded-lg overflow-hidden mb-4 border-2 border-neutral-300 shadow-inner z-0">
         <MapContainer center={position} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -52,55 +52,54 @@ const PropertyLocation = ({ property, onGetDirections }) => {
       </div>
 
       {/* Directions Button */}
-      <div className="mb-8">
-        <Button onClick={onGetDirections} className="w-full" variant="primary" size="lg">Get Directions</Button>
+      <div className="mb-4">
+        <Button onClick={onGetDirections} className="w-full text-xs py-1.5" variant="primary">Get Directions</Button>
       </div>
 
       {/* Landmarks Section */}
       {landmarkTypes.length > 0 && (
         <div>
-          <h3 className="text-xl font-semibold text-primary-700 mb-4">Nearby Landmarks</h3>
+          <h3 className="text-sm font-semibold text-primary-700 mb-2">Nearby Landmarks</h3>
           {/* Landmark Type Filters */}
-          <div className="flex flex-wrap gap-2 mb-5 pb-3 border-b border-neutral-200">
+          <div className="flex flex-wrap gap-2 mb-3 pb-2 border-b border-neutral-200">
             {landmarkTypes.map(type => (
               <button 
                 key={type}
                 onClick={() => setSelectedLandmarkType(type)}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 border-2 ${ 
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-all ${ 
                   selectedLandmarkType === type
-                    ? 'bg-primary-600 text-white border-primary-600 shadow-md'
-                    : 'bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-primary-100 hover:border-primary-200'
+                    ? 'bg-primary-700 text-white shadow-sm'
+                    : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'
                 }`}>
                 {type}
               </button>
             ))}
           </div>
 
-          {/* Landmark List */}
-          <div className="space-y-4">
-            {filteredLandmarks.length > 0 ? (
-              filteredLandmarks.map(landmark => (
-                <div key={landmark.id} className="p-4 bg-neutral-50 rounded-lg border border-neutral-200 flex items-center">
-                  <div className="flex-grow pr-4">
-                    <p className="text-xs font-medium text-neutral-500">Name</p>
-                    <p className="font-semibold text-sm text-neutral-800">{landmark.name}</p>
+          {/* Landmark Table */}
+          {filteredLandmarks.length > 0 ? (
+            <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+              {/* Table Header */}
+              <div className="bg-neutral-100 px-4 py-2 grid grid-cols-3 gap-4 border-b border-neutral-200">
+                <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide">Name</div>
+                <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide text-center">Distance</div>
+                <div className="text-xs font-semibold text-neutral-700 uppercase tracking-wide text-center">Time</div>
+              </div>
+              
+              {/* Table Body */}
+              <div className="divide-y divide-neutral-100">
+                {filteredLandmarks.map(landmark => (
+                  <div key={landmark.id} className="px-4 py-2 grid grid-cols-3 gap-4 hover:bg-neutral-50 transition-colors">
+                    <div className="text-sm font-medium text-neutral-800">{landmark.name}</div>
+                    <div className="text-sm text-primary-700 font-semibold text-center">{landmark.distanceInKm} km</div>
+                    <div className="text-sm text-secondary-600 font-semibold text-center">~{landmark.timeInMinutes} min</div>
                   </div>
-                  <div className="text-right flex items-baseline space-x-4">
-                    <div>
-                      <p className="text-xs font-medium text-neutral-500">Distance</p>
-                      <p className="font-bold text-sm text-primary-700">{landmark.distanceInKm} km</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-neutral-500">Time</p>
-                      <p className="font-bold text-sm text-secondary-600">~{landmark.timeInMinutes} min</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-neutral-500 text-center py-4">No landmarks of this type found.</p>
-            )}
-          </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-neutral-500 text-center py-4">No landmarks of this type found.</p>
+          )}
         </div>
       )}
     </div>

@@ -144,8 +144,12 @@ const PropertyDetail = () => {
             {hasImages && propertyImages.length > 1 && !imageError && (
               <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
                 <button 
-                  onClick={() => setActiveImageIndex((prev) => (prev === 0 ? propertyImages.length - 1 : prev - 1))}
-                  className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-all"
+                  onClick={() => {
+                    const newIndex = activeImageIndex === 0 ? propertyImages.length - 1 : activeImageIndex - 1;
+                    console.log('Previous clicked, current:', activeImageIndex, 'new:', newIndex);
+                    handleImageChange(newIndex);
+                  }}
+                  className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-all z-10"
                   aria-label="Previous image"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,8 +157,12 @@ const PropertyDetail = () => {
                   </svg>
                 </button>
                 <button 
-                  onClick={() => setActiveImageIndex((prev) => (prev === propertyImages.length - 1 ? 0 : prev + 1))}
-                  className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-all"
+                  onClick={() => {
+                    const newIndex = activeImageIndex === propertyImages.length - 1 ? 0 : activeImageIndex + 1;
+                    console.log('Next clicked, current:', activeImageIndex, 'new:', newIndex);
+                    handleImageChange(newIndex);
+                  }}
+                  className="bg-black/30 hover:bg-black/50 p-2 rounded-full transition-all z-10"
                   aria-label="Next image"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -171,7 +179,10 @@ const PropertyDetail = () => {
                   {propertyImages.map((_, index) => (
                     <button 
                       key={index}
-                      onClick={() => setActiveImageIndex(index)}
+                      onClick={() => {
+                        console.log('Dot clicked for index:', index);
+                        handleImageChange(index);
+                      }}
                       className={`w-1.5 h-1.5 rounded-full transition-all pointer-events-auto ${
                         index === activeImageIndex 
                           ? 'bg-white' 
@@ -382,13 +393,6 @@ const PropertyDetail = () => {
           </Button>
         </div>
 
-            {/* Location & Landmarks Section */}
-            {property.latitude && property.longitude && (
-              <div className="mt-8">
-                <PropertyLocation property={property} onGetDirections={handleGetDirections} />
-              </div>
-            )}
-
         {/* Main Content Grid - More compact */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <div className="lg:col-span-2">
@@ -400,6 +404,13 @@ const PropertyDetail = () => {
               activeFlatType={activeFlatType}
               setActiveFlatType={setActiveFlatType}
             />
+
+            {/* Location & Landmarks Section - Desktop: Below AvailableFlats */}
+            {property.latitude && property.longitude && (
+              <div className="hidden lg:block">
+                <PropertyLocation property={property} onGetDirections={handleGetDirections} />
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-1">
@@ -407,11 +418,18 @@ const PropertyDetail = () => {
 
             <PropertyAmenities amenities={property.amenities} />
 
+            {/* Location & Landmarks Section - Mobile: Above PropertyQRCode */}
+            {property.latitude && property.longitude && (
+              <div className="block lg:hidden">
+                <PropertyLocation property={property} onGetDirections={handleGetDirections} />
+              </div>
+            )}
+
             <PropertyQRCode 
               name={property.name}
               reraNo={property.reraNo}
               reraUrl={property.reraUrl}
-              qrCodeImage={property.qrCodeImage}
+              qrCodeImage={qrCodeImage}
             />
 
             <ContactCard 

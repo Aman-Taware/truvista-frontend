@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
+import ScrollToTop from './components/ui/ScrollToTop';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
@@ -46,6 +47,7 @@ const App = () => {
     <AuthProvider>
       <NotificationProvider>
         <Router>
+          <ScrollToTop />
           <Routes>
             {/* Style Guide Route (outside of layouts) */}
             <Route path="/style-guide" element={<StyleGuide />} />

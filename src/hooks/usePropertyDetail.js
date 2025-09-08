@@ -169,6 +169,48 @@ export const usePropertyDetail = () => {
     setBookingNote('');
   };
 
+  const handleImageChange = (newIndex) => {
+    console.log('handleImageChange called with:', newIndex, 'current:', activeImageIndex);
+    if (newIndex !== activeImageIndex) {
+      setActiveImageIndex(newIndex);
+      setImageError(false);
+    }
+  };
+
+  const handleLocationClick = () => {
+    if (!user) {
+      showToast({ type: 'error', message: 'Please log in to get location details.' });
+      return;
+    }
+
+    if (userHasBooking) {
+      // User has booking, open WhatsApp with location request
+      const message = encodeURIComponent(
+        `Hi! I have booked a site visit for ${property?.name || 'the property'}. Could you please share the exact location details and directions? Thank you!`
+      );
+      const whatsappUrl = `https://wa.me/?text=${message}`;
+      window.open(whatsappUrl, '_blank');
+    } else {
+      // User doesn't have booking, show prompt to book first
+      setLocationPrompt(true);
+      setBookingModalOpen(true);
+    }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleWhatsAppInquiry = () => {
+    if (!property) return;
+    
+    const message = encodeURIComponent(
+      `Hi! I'm interested in ${property.name}. Could you please provide more details about this property? Thank you!`
+    );
+    const whatsappUrl = `https://wa.me/?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const submitBooking = async () => {
     if (!bookingDate) {
       showToast({ type: 'error', message: 'Please select a date for the site visit.' });
@@ -200,7 +242,7 @@ export const usePropertyDetail = () => {
     property,
     loading,
     activeImageIndex,
-    setActiveImageIndex,
+    handleImageChange,
     inShortlist,
     toggleShortlist,
     activeFlatType,
@@ -208,9 +250,10 @@ export const usePropertyDetail = () => {
     flatsByType,
     flatTypes,
     imageError,
-    setImageError,
+    handleImageError,
     checkingShortlist,
     bookingModalOpen,
+    setBookingModalOpen,
     handleBookSiteVisit,
     handleCloseModal,
     bookingDate,
@@ -224,5 +267,7 @@ export const usePropertyDetail = () => {
     checkingBookings,
     locationPrompt,
     setLocationPrompt,
+    handleLocationClick,
+    handleWhatsAppInquiry,
   };
 };
