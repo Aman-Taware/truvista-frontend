@@ -8,7 +8,8 @@ export const LOCATIONS = [
   'Moshi-Dudulgaon',
   'Moshi-Bohradewadi',
   'Charholi',
-  'Chikhali'
+  'Chikhali',
+  'Spine-City'
 ];
 
 // Flat Types

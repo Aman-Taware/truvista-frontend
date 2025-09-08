@@ -13,7 +13,8 @@ export const availableLocations = [
   'Wakad',
   'Hinjewadi',
   'Baner',
-  'Balewadi'
+  'Balewadi',
+  'Spine-City'
 ];
 
 // Location data for Pune real estate properties
@@ -104,6 +105,17 @@ export const locationData = {
       propertyCount: 22,
       avgPrice: 5500000,
       growth: 9.5
+    }
+  },
+  'Spine-City': {
+    title: 'Spine-City',
+    description: 'A well-planned and developing residential and commercial hub.',
+    image: 'https://images.unsplash.com/photo-1582463229552-35a9d9402c61?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    featured: false,
+    stats: {
+      propertyCount: 20,
+      avgPrice: 4800000,
+      growth: 10.1
     }
   }
 };
