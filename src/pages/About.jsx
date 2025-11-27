@@ -21,34 +21,34 @@ const About = () => {
               Our Story
             </h2>
             <p className="text-neutral-700 mb-4 leading-relaxed">
-              Truvista was founded with a simple mission: to make luxury real estate accessible, 
-              transparent, and stress-free. We understand that finding the perfect property is one 
-              of life's most significant decisions, and we're here to guide you through every step 
+              Truvista was founded with a simple mission: to make luxury real estate accessible,
+              transparent, and stress-free. We understand that finding the perfect property is one
+              of life's most significant decisions, and we're here to guide you through every step
               of the journey.
             </p>
             <p className="text-neutral-700 mb-6 leading-relaxed">
-              Our platform brings together cutting-edge technology and human expertise to create 
+              Our platform brings together cutting-edge technology and human expertise to create
               a seamless experience that puts you in control while providing the support you need.
             </p>
-            
+
             <div className="mt-10 mb-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="text-center">
                   <div className="text-primary-700 mb-4">
-                    <span className="text-4xl font-display font-bold">20+</span>
+                    <span className="text-4xl font-display font-bold">5+</span>
                   </div>
                   <h3 className="text-lg font-medium text-neutral-900 mb-2">Years of Excellence</h3>
                   <p className="text-neutral-600">Providing exceptional service in luxury real estate</p>
                 </div>
-                
+
                 <div className="text-center">
                   <div className="text-primary-700 mb-4">
-                    <span className="text-4xl font-display font-bold">500+</span>
+                    <span className="text-4xl font-display font-bold">50+</span>
                   </div>
                   <h3 className="text-lg font-medium text-neutral-900 mb-2">Luxury Properties</h3>
                   <p className="text-neutral-600">Successfully sold and managed worldwide</p>
                 </div>
-                
+
                 <div className="text-center">
                   <div className="text-primary-700 mb-4">
                     <span className="text-4xl font-display font-bold">98%</span>
@@ -58,7 +58,7 @@ const About = () => {
                 </div>
               </div>
             </div>
-            
+
             <h2 className="text-2xl font-display font-semibold text-neutral-900 mb-6">
               Our Mission
             </h2>
@@ -72,7 +72,7 @@ const About = () => {
               <li>Ensuring security and trust in every transaction</li>
               <li>Making quality properties accessible to everyone</li>
             </ul>
-            
+
             <h2 className="text-2xl font-display font-semibold text-neutral-900 mb-6">
               Our Values
             </h2>
@@ -83,21 +83,21 @@ const About = () => {
                   We strive for excellence in every aspect of our service, from property selection to client communication, ensuring an unparalleled experience.
                 </p>
               </div>
-              
+
               <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-200">
                 <h3 className="text-xl font-display font-semibold text-neutral-900 mb-3">Integrity</h3>
                 <p className="text-neutral-700">
                   We operate with unwavering integrity and transparency, building lasting relationships founded on trust and mutual respect.
                 </p>
               </div>
-              
+
               <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-200">
                 <h3 className="text-xl font-display font-semibold text-neutral-900 mb-3">Innovation</h3>
                 <p className="text-neutral-700">
                   We embrace innovation and leverage cutting-edge technology to enhance the real estate experience for our clients.
                 </p>
               </div>
-              
+
               <div className="bg-neutral-50 p-6 rounded-lg border border-neutral-200">
                 <h3 className="text-xl font-display font-semibold text-neutral-900 mb-3">Exclusivity</h3>
                 <p className="text-neutral-700">
@@ -110,14 +110,14 @@ const About = () => {
               Our Team
             </h2>
             <p className="text-neutral-700 mb-4 leading-relaxed">
-              Behind Truvista is a dedicated team of real estate professionals, technology experts, 
-              and customer service specialists who share a passion for redefining the property 
-              market. With decades of combined experience, our team brings a wealth of knowledge and 
+              Behind Truvista is a dedicated team of real estate professionals, technology experts,
+              and customer service specialists who share a passion for redefining the property
+              market. With decades of combined experience, our team brings a wealth of knowledge and
               insight to help you make informed decisions.
             </p>
             <p className="text-neutral-700">
-              We believe in building lasting relationships based on trust, integrity, and exceptional 
-              service. When you choose Truvista, you're not just using a platform – you're partnering 
+              We believe in building lasting relationships based on trust, integrity, and exceptional
+              service. When you choose Truvista, you're not just using a platform – you're partnering
               with a team that cares about your success.
             </p>
           </div>
