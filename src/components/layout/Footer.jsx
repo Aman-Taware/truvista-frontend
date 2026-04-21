@@ -90,6 +90,12 @@ const Footer = () => {
                   </div>
                   <span>truvista25@gmail.com</span>
                 </div>
+                <div className="flex items-center">
+                  <div className="text-secondary-300 mr-3">
+                    <MapPin size={18} strokeWidth={2.5} />
+                  </div>
+                  <span>Rera No: A52100047725</span>
+                </div>
               </address>
             </div>
           </div>
@@ -111,8 +117,8 @@ const Footer = () => {
 
 // Footer Link Component
 const FooterLink = ({ to, children }) => (
-  <RouterLink 
-    to={to} 
+  <RouterLink
+    to={to}
     className="text-neutral-200 hover:text-white hover:translate-x-1 transition-all duration-200 text-sm inline-block"
   >
     {children}
@@ -121,8 +127,8 @@ const FooterLink = ({ to, children }) => (
 
 // Social Link Component
 const SocialLink = ({ href, children, ...rest }) => (
-  <a 
-    href={href} 
+  <a
+    href={href}
     className="text-neutral-300 hover:text-secondary-400 bg-primary-700 hover:bg-primary-600 p-2 rounded-full transition-all duration-200"
     target="_blank"
     rel="noopener noreferrer"
