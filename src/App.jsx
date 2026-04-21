@@ -8,6 +8,7 @@ import ScrollToTop from './components/ui/ScrollToTop';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
+import CrmLayout from './components/layout/CrmLayout';
 
 // Pages
 import Home from './pages/Home';
@@ -37,6 +38,14 @@ import CreateProperty from './pages/Admin/CreateProperty';
 import EditProperty from './pages/Admin/EditProperty';
 import PropertyMediaManagement from './pages/Admin/PropertyMediaManagement';
 import LandmarkManager from './pages/Admin/LandmarkManager';
+
+// CRM Pages
+import AdminCrmDashboard from './pages/CRM/AdminCrmDashboard';
+import ExecutivePipeline from './pages/CRM/ExecutivePipeline';
+import ExecutiveCalendar from './pages/CRM/ExecutiveCalendar';
+
+// Routes
+import ExecutiveRoute from './components/auth/ExecutiveRoute';
 
 /**
  * Main App Component
@@ -123,6 +132,22 @@ const App = () => {
               <Route path="users" element={<UsersPage />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="direction-requests" element={<DirectionRequestsPage />} />
+            </Route>
+
+            {/* CRM Layout Routes */}
+            <Route element={<CrmLayout />}>
+              {/* Admin CRM Routes */}
+              <Route path="/admin/crm" element={<AdminRoute />}>
+                <Route index element={<AdminCrmDashboard />} />
+                <Route path="pipeline" element={<ExecutivePipeline isGlobalView={true} />} />
+                <Route path="calendar" element={<ExecutiveCalendar isGlobalView={true} />} />
+              </Route>
+              
+              {/* Executive CRM Routes */}
+              <Route path="/executive/crm" element={<ExecutiveRoute />}>
+                <Route path="pipeline" element={<ExecutivePipeline />} />
+                <Route path="calendar" element={<ExecutiveCalendar />} />
+              </Route>
             </Route>
           </Routes>
         </Router>

@@ -68,9 +68,18 @@ const Header = () => {
                 <NavLink to="/user/bookings">Bookings</NavLink>
                 <NavLink to="/user/shortlist">Shortlist</NavLink>
                 <NavLink to="/user/profile">Profile</NavLink>
-                {isAdmin() && (
-                  <NavLink to="/admin" className="text-secondary-500 font-semibold">
-                    Admin Dashboard
+                {isAdmin() ? (
+                  <>
+                    <NavLink to="/admin" className="text-secondary-500 font-semibold">
+                      Admin Dashboard
+                    </NavLink>
+                    <NavLink to="/admin/crm" className="text-primary-600 font-semibold">
+                      CRM
+                    </NavLink>
+                  </>
+                ) : (
+                  <NavLink to="/executive/crm/pipeline" className="text-primary-600 font-semibold">
+                    My CRM
                   </NavLink>
                 )}
               </>
@@ -131,13 +140,30 @@ const Header = () => {
                 <MobileNavLink to="/user/bookings" onClick={() => setMobileMenuOpen(false)}>Scheduled Visit</MobileNavLink>
                 <MobileNavLink to="/user/shortlist" onClick={() => setMobileMenuOpen(false)}>Shortlist</MobileNavLink>
                 <MobileNavLink to="/user/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileNavLink>
-                {isAdmin() && (
+                {isAdmin() ? (
+                  <>
+                    <MobileNavLink 
+                      to="/admin" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-secondary-500 font-semibold"
+                    >
+                      Admin Dashboard
+                    </MobileNavLink>
+                    <MobileNavLink 
+                      to="/admin/crm" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-primary-600 font-semibold"
+                    >
+                      CRM Overview
+                    </MobileNavLink>
+                  </>
+                ) : (
                   <MobileNavLink 
-                    to="/admin" 
+                    to="/executive/crm/pipeline" 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-secondary-500 font-semibold"
+                    className="text-primary-600 font-semibold"
                   >
-                    Admin Dashboard
+                    My CRM
                   </MobileNavLink>
                 )}
               </>

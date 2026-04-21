@@ -12,20 +12,31 @@ import Logo from '../ui/Logo';
 const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext);
+  const { logout, isAdmin, isExecutive } = useContext(AuthContext);
   const { showNotification } = useContext(NotificationContext);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Navigation menu items
-  const navItems = [
-    { name: 'Dashboard', path: '/admin', icon: 'dashboard' },
-    { name: 'Properties', path: '/admin/properties', icon: 'building' },
-    { name: 'Bookings', path: '/admin/bookings', icon: 'calendar' },
-    { name: 'Users', path: '/admin/users', icon: 'users' },
-    { name: 'Direction Requests', path: '/admin/direction-requests', icon: 'directions' },
-    { name: 'Settings', path: '/admin/settings', icon: 'settings' },
-    { name: 'Home', path: '/', icon: 'home' },
-  ];
+  // Define navigation items dynamically based on roles
+  const navItems = [];
+  
+  if (isAdmin && isAdmin()) {
+    navItems.push(
+      { name: 'Dashboard', path: '/admin', icon: 'dashboard' },
+      { name: 'Leads (CRM)', path: '/admin/crm', icon: 'users' },
+      { name: 'Properties', path: '/admin/properties', icon: 'building' },
+      { name: 'Bookings', path: '/admin/bookings', icon: 'calendar' },
+      { name: 'Users', path: '/admin/users', icon: 'users' },
+      { name: 'Direction Requests', path: '/admin/direction-requests', icon: 'directions' },
+      { name: 'Settings', path: '/admin/settings', icon: 'settings' },
+      { name: 'Home', path: '/', icon: 'home' }
+    );
+  } else if (isExecutive && isExecutive()) {
+    navItems.push(
+      { name: 'My Leads', path: '/executive/crm', icon: 'users' },
+      { name: 'Calendar Visits', path: '/executive/crm/calendar', icon: 'calendar' },
+      { name: 'Home', path: '/', icon: 'home' }
+    );
+  }
 
   const handleLogout = async () => {
     try {
