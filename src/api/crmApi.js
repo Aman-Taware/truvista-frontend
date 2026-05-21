@@ -80,6 +80,14 @@ const crmApi = {
     return await api.post(`/api/executive/crm/leads/${leadId}/remarks`, remarkData, { _skipDuplicate: true });
   },
 
+  updateFollowUpDate: async (leadId, followUpDate, remarkText, isAdmin = false) => {
+    const base = isAdmin ? '/api/admin/crm/leads' : '/api/executive/crm/leads';
+    return await api.put(`${base}/${leadId}/followup`, {
+      followUpDate: followUpDate || '',
+      remarkText: remarkText || '',
+    }, { _skipDuplicate: true });
+  },
+
   getCalendarVisits: async (startDate, endDate) => {
     return await api.get('/api/executive/crm/leads/calendar', {
       params: { startDate, endDate },

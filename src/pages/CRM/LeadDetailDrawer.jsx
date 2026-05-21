@@ -1,33 +1,25 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { X, Phone, Mail, Calendar, Clock, Send, CheckCircle2, Building2, Tag, MessageSquare } from 'lucide-react';
+import { X, Phone, Mail, Calendar, Clock, Send, Building2, MessageSquare, RefreshCw } from 'lucide-react';
 import crmApi from '../../api/crmApi';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
-const STATUS_LABELS = {
-  NEW: 'New',
-  CONTACTED: 'Contacted',
-  INTERESTED: 'Interested',
-  NOT_INTERESTED: 'Not Interested',
-  VISIT_PLANNED: 'Visit Planned',
-  VISIT_DONE: 'Visit Done',
-  NEGOTIATION: 'Negotiation',
-  WON: 'Won ✓',
-  LOST: 'Lost',
-};
-
-const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded, pipelineStages }) => {
+const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded, onFollowUpChanged, pipelineStages, isAdmin = false }) => {
   const { showNotification } = useContext(NotificationContext);
 
   const [newRemark, setNewRemark] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpComment, setFollowUpComment] = useState('');
   const [visitedDetails, setVisitedDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
+  const [updatingFollowUp, setUpdatingFollowUp] = useState(false);
 
   useEffect(() => {
     if (lead) {
       setVisitedDetails(lead.visitedPropertyDetails || '');
+      // Pre-fill follow-up date picker with current value
+      setFollowUpDate(lead.followUpDate || '');
     }
   }, [lead?.id]);
 
@@ -39,16 +31,35 @@ const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded
     setSubmitting(true);
     try {
       const payload = { remarkText: newRemark };
+      // If a follow-up date is set in the remark form, include it — it will overwrite lead.followUpDate
       if (followUpDate) payload.followUpDate = followUpDate;
-      const addedRemark = await crmApi.addLeadRemark(lead.id, payload);
-      onRemarkAdded(lead.id, addedRemark);
+      const updatedLead = await crmApi.addLeadRemark(lead.id, payload);
+      onRemarkAdded(lead.id, updatedLead);
       setNewRemark('');
-      setFollowUpDate('');
+      if (followUpDate) {
+        // Sync displayed follow-up date if it was changed via remark
+        setFollowUpDate(updatedLead?.followUpDate || followUpDate);
+        if (onFollowUpChanged) onFollowUpChanged(lead.id, followUpDate);
+      }
       showNotification('Remark added', 'success');
     } catch (err) {
       showNotification('Failed to add remark', 'error');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUpdateFollowUp = async () => {
+    setUpdatingFollowUp(true);
+    try {
+      await crmApi.updateFollowUpDate(lead.id, followUpDate || null, followUpComment, isAdmin);
+      if (onFollowUpChanged) onFollowUpChanged(lead.id, followUpDate || null);
+      setFollowUpComment('');
+      showNotification(followUpDate ? 'Follow-up date updated' : 'Follow-up date cleared', 'success');
+    } catch (err) {
+      showNotification('Failed to update follow-up date', 'error');
+    } finally {
+      setUpdatingFollowUp(false);
     }
   };
 
@@ -67,6 +78,8 @@ const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded
     }
   };
 
+  const currentFollowUpChanged = followUpDate !== (lead.followUpDate || '');
+
   return (
     <>
       {/* Backdrop */}
@@ -80,8 +93,9 @@ const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded
 
         {/* Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-primary-800 to-primary-700 flex justify-between items-start">
-          <div className="text-white">
-            <h2 className="text-lg font-bold leading-tight">{lead.name}</h2>
+          <div>
+            {/* FIX #3: Explicit text-white on the name */}
+            <h2 className="text-lg font-bold leading-tight text-white">{lead.name}</h2>
             <p className="text-primary-200 text-xs mt-0.5">Lead #{lead.id} · {lead.source || 'Unknown source'}</p>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-primary-600 rounded-full transition-colors text-primary-200 hover:text-white">
@@ -113,13 +127,61 @@ const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded
               </select>
             </Section>
 
+            {/* FIX #1: Follow-up Date — single editable section, always visible */}
+            <Section title="Follow-up Date">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={followUpDate}
+                    onChange={(e) => setFollowUpDate(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 bg-white"
+                  />
+                </div>
+                {followUpDate && (
+                  <button
+                    type="button"
+                    onClick={() => setFollowUpDate('')}
+                    className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors text-xs"
+                    title="Clear follow-up"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleUpdateFollowUp}
+                  disabled={updatingFollowUp || !currentFollowUpChanged}
+                  className="px-3 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  {updatingFollowUp ? <LoadingSpinner size="sm" color="white" /> : <RefreshCw size={13} />}
+                  Update
+                </button>
+              </div>
+              {/* Optional comment for the follow-up change */}
+              <textarea
+                value={followUpComment}
+                onChange={(e) => setFollowUpComment(e.target.value)}
+                placeholder="Add a comment (optional) — e.g. Client asked to push visit to next week…"
+                rows={2}
+                className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none text-gray-700 placeholder-gray-400 bg-gray-50/50"
+              />
+              {lead.followUpDate && (
+                <p className="text-xs text-indigo-600 mt-1.5 flex items-center gap-1">
+                  <Calendar size={11} />
+                  Current: {new Date(lead.followUpDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              )}
+            </Section>
+
             {/* Visited Property Details — shown when VISIT_DONE */}
             {lead.status === 'VISIT_DONE' && (
               <Section title="Property Visited">
                 <textarea
                   value={visitedDetails}
                   onChange={(e) => setVisitedDetails(e.target.value)}
-                  placeholder="e.g. Visited 3BHK Unit 502, Tower A. Client liked the view and floor plan. Interested in 2BHK alternative..."
+                  placeholder="e.g. Visited 3BHK Unit 502, Tower A. Client liked the view and floor plan..."
                   rows={4}
                   className="w-full p-3 border border-teal-200 bg-teal-50/30 rounded-xl text-sm resize-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 outline-none text-gray-700 placeholder-gray-400"
                 />
@@ -133,17 +195,9 @@ const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded
                   disabled={savingDetails}
                   className="mt-2 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {savingDetails ? <><LoadingSpinner size="sm" /> Saving…</> : <><Building2 size={15} /> Save Property Details</>}
+                  {savingDetails ? <><LoadingSpinner size="sm" />Saving…</> : <><Building2 size={15} />Save Property Details</>}
                 </button>
               </Section>
-            )}
-
-            {/* Follow-up Date (for VISIT_PLANNED) */}
-            {lead.status === 'VISIT_PLANNED' && (
-              <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-                <p className="text-xs font-bold uppercase tracking-wide text-indigo-600 mb-2">Schedule Follow-up / Visit</p>
-                <p className="text-xs text-indigo-500">Set a follow-up date in the remark below. It will appear on your Calendar.</p>
-              </div>
             )}
 
             {/* Interaction Timeline */}
@@ -164,22 +218,8 @@ const LeadDetailDrawer = ({ isOpen, onClose, lead, onStatusChange, onRemarkAdded
           </div>
         </div>
 
-        {/* Sticky Input Bar */}
+        {/* Sticky Input Bar — remark only, follow-up handled in section above */}
         <div className="border-t border-gray-100 bg-gray-50/50 p-4 space-y-2.5">
-          {/* Follow-up date */}
-          <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-            <Calendar size={13} className="text-primary-400" />
-            Follow-up date (optional):
-            <input
-              type="date"
-              value={followUpDate}
-              onChange={(e) => setFollowUpDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="ml-1 border border-gray-200 rounded px-2 py-1 text-xs outline-none focus:border-primary-400 bg-white"
-            />
-          </label>
-
-          {/* Remark input */}
           <form onSubmit={handleSubmitRemark} className="relative">
             <textarea
               value={newRemark}
@@ -239,12 +279,6 @@ const RemarkCard = ({ remark }) => (
       </div>
     </div>
     <p className="text-sm text-gray-700 leading-relaxed">{remark.remarkText}</p>
-    {remark.followUpDate && (
-      <div className="mt-2 flex items-center gap-1.5 text-indigo-600 bg-indigo-50 rounded-lg px-2.5 py-1.5 text-xs font-medium w-fit">
-        <Calendar size={11} />
-        Follow-up: {new Date(remark.followUpDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-      </div>
-    )}
   </div>
 );
 

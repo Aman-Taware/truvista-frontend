@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ChevronLeft, ChevronRight, Phone, MessageSquare, MapPin, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, MessageSquare, Calendar as CalendarIcon, Edit2, Check, X } from 'lucide-react';
 import { 
   format, isSameDay, parseISO, startOfMonth, endOfMonth, 
   startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, 
@@ -20,16 +20,19 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(new Date());
 
-  // Determine the date range to fetch: start of the first week of the month to end of the last week
+  // Per-card inline follow-up editing state
+  const [editingFollowUp, setEditingFollowUp] = useState(null); // leadId
+  const [editDate, setEditDate] = useState('');
+  const [editComment, setEditComment] = useState('');
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 }); // Sunday start
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
   useEffect(() => {
-    if (isGlobalView) {
-      fetchExecutives();
-    }
+    if (isGlobalView) fetchExecutives();
   }, [isGlobalView]);
 
   useEffect(() => {
@@ -59,7 +62,6 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
       }
       setRemarks(Array.isArray(data) ? data : []);
     } catch (err) {
-      // Ignore cancelled/duplicate requests silently
       if (err?.message?.includes('cancelled') || err?.message?.includes('canceled')) return;
       showNotification('Failed to load calendar', 'error');
     } finally {
@@ -75,12 +77,38 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
   };
 
   const daysInGrid = eachDayOfInterval({ start: startDate, end: endDate });
+  const getRemarksForDay = (day) =>
+    remarks.filter(r => r.followUpDate && isSameDay(parseISO(r.followUpDate), day));
+  const selectedDayRemarks = getRemarksForDay(selectedDay);
 
-  const getRemarksForDay = (day) => {
-    return remarks.filter(r => r.followUpDate && isSameDay(parseISO(r.followUpDate), day));
+  const startEditFollowUp = (remark) => {
+    setEditingFollowUp(remark.leadId);
+    setEditDate(remark.followUpDate || '');
+    setEditComment('');
   };
 
-  const selectedDayRemarks = getRemarksForDay(selectedDay);
+  const cancelEditFollowUp = () => {
+    setEditingFollowUp(null);
+    setEditDate('');
+    setEditComment('');
+  };
+
+  const saveFollowUp = async (leadId) => {
+    if (!editDate) return;
+    setSavingFollowUp(true);
+    try {
+      await crmApi.updateFollowUpDate(leadId, editDate, editComment, isGlobalView);
+      showNotification('Follow-up date updated', 'success');
+      setEditingFollowUp(null);
+      setEditDate('');
+      setEditComment('');
+      fetchVisits(); // Refresh calendar
+    } catch (err) {
+      showNotification('Failed to update follow-up', 'error');
+    } finally {
+      setSavingFollowUp(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50 p-3 sm:p-6 gap-4">
@@ -160,7 +188,6 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                     ${isSelected ? 'ring-2 ring-inset ring-primary-400 bg-primary-50/20' : ''}
                   `}
                 >
-                  {/* Date number */}
                   <span className={`
                     w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full text-xs sm:text-sm font-semibold
                     ${isDayToday ? 'bg-primary-600 text-white shadow-sm' :
@@ -169,10 +196,9 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                     {format(day, 'd')}
                   </span>
 
-                  {/* Dot indicators on mobile, full pills on desktop */}
                   {dayRemarks.length > 0 && (
                     <>
-                      {/* Mobile: colored dots per-lead-status */}
+                      {/* Mobile: colored dots */}
                       <div className="flex gap-0.5 mt-1 sm:hidden">
                         {dayRemarks.slice(0, 3).map((r, idx) => {
                           const cfg = getStageConfig(r.leadStatus);
@@ -180,7 +206,7 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                         })}
                         {dayRemarks.length > 3 && <span className="text-[8px] text-gray-400 font-bold leading-none ml-0.5">+{dayRemarks.length - 3}</span>}
                       </div>
-                      {/* Desktop: colored event pills per-lead-status */}
+                      {/* Desktop: event pills */}
                       <div className="hidden sm:block mt-1 space-y-1 overflow-hidden max-h-[60px]">
                         {dayRemarks.slice(0, 2).map((remark, idx) => {
                           const cfg = getStageConfig(remark.leadStatus);
@@ -222,7 +248,7 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
           </span>
         </div>
 
-        <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+        <div className="p-4 space-y-3 max-h-[500px] overflow-y-auto">
           {selectedDayRemarks.length === 0 ? (
             <div className="py-10 flex flex-col items-center justify-center text-gray-400">
               <CalendarIcon size={32} className="mb-2 text-gray-300" strokeWidth={1.5} />
@@ -232,10 +258,11 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
           ) : (
             selectedDayRemarks.map((remark, i) => {
               const cfg = getStageConfig(remark.leadStatus);
+              const isEditingThis = editingFollowUp === remark.leadId;
               return (
                 <div key={i} className={`rounded-2xl p-4 border ${cfg.calBg} border-current/10`}>
                   <div className="flex items-start justify-between gap-2">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badgeStyle}`}>{cfg.title}</span>
                       </div>
@@ -245,7 +272,51 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                           Assigned to: {remark.leadAssignedUserName}
                         </p>
                       )}
+
+                      {/* FIX #2: Inline follow-up date editor */}
+                      {isEditingThis ? (
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="date"
+                              value={editDate}
+                              onChange={(e) => setEditDate(e.target.value)}
+                              className="flex-1 border border-primary-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white"
+                            />
+                            <button
+                              onClick={() => saveFollowUp(remark.leadId)}
+                              disabled={savingFollowUp || !editDate}
+                              className="w-8 h-8 bg-green-600 text-white rounded-xl flex items-center justify-center hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {savingFollowUp ? <LoadingSpinner size="sm" color="white" /> : <Check size={13} />}
+                            </button>
+                            <button
+                              onClick={cancelEditFollowUp}
+                              className="w-8 h-8 bg-gray-200 text-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-300"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                          {/* Comment field */}
+                          <textarea
+                            value={editComment}
+                            onChange={(e) => setEditComment(e.target.value)}
+                            placeholder="Add a comment (optional) — e.g. Client asked to reschedule…"
+                            rows={2}
+                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white placeholder-gray-400"
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditFollowUp(remark)}
+                          className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 hover:text-primary-800 bg-white/70 hover:bg-white px-2.5 py-1.5 rounded-lg transition-colors border border-primary-200/50"
+                        >
+                          <Edit2 size={11} />
+                          Move Follow-up Date
+                        </button>
+                      )}
                     </div>
+
                     {remark.leadPhone && (
                       <div className="flex gap-1.5 shrink-0">
                         <a href={`tel:${remark.leadPhone}`} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl">
@@ -258,11 +329,6 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                       </div>
                     )}
                   </div>
-                  {remark.remarkText && (
-                    <div className="mt-3 bg-white/70 p-3 rounded-xl border border-white/50">
-                      <p className="text-xs text-gray-600 leading-relaxed italic">"{remark.remarkText}"</p>
-                    </div>
-                  )}
                 </div>
               );
             })
@@ -274,5 +340,3 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
 };
 
 export default ExecutiveCalendar;
-
-

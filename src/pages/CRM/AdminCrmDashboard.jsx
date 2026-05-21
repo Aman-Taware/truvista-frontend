@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   UploadCloud, Users, CheckCircle, AlertCircle,
-  UserCheck, Eye, Search, ChevronDown, Plus, X, Edit, Trash2, Phone, MessageCircle, Download
+  UserCheck, Eye, Search, ChevronDown, Plus, X, Edit, Trash2, Phone, MessageCircle, Download, Calendar
 } from 'lucide-react';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import crmApi from '../../api/crmApi';
@@ -33,7 +33,7 @@ const AdminCrmDashboard = () => {
   // Manual Lead Creation & Edit State
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [leadData, setLeadData] = useState({ name: '', phone: '', email: '', source: '' });
+  const [leadData, setLeadData] = useState({ name: '', phone: '', email: '', source: '', followUpDate: '', followUpComment: '' });
   const [savingLead, setSavingLead] = useState(false);
   const [editingLeadId, setEditingLeadId] = useState(null);
 
@@ -196,6 +196,15 @@ const AdminCrmDashboard = () => {
     try {
       if (editingLeadId) {
         await crmApi.updateLead(editingLeadId, leadData);
+        // Save follow-up date + comment if provided
+        if (leadData.followUpDate !== undefined) {
+          await crmApi.updateFollowUpDate(
+            editingLeadId,
+            leadData.followUpDate || null,
+            leadData.followUpComment || '',
+            true // isAdmin
+          );
+        }
         showNotification('Lead updated successfully', 'success');
       } else {
         await crmApi.createLead(leadData);
@@ -224,14 +233,21 @@ const AdminCrmDashboard = () => {
   };
 
   const openAddModal = () => {
-    setLeadData({ name: '', phone: '', email: '', source: '' });
+    setLeadData({ name: '', phone: '', email: '', source: '', followUpDate: '', followUpComment: '' });
     setEditingLeadId(null);
     setShowAddModal(true);
   };
 
   const openEditModal = (e, lead) => {
     e.stopPropagation(); // Prevent opening drawer
-    setLeadData({ name: lead.name || '', phone: lead.phone || '', email: lead.email || '', source: lead.source || '' });
+    setLeadData({
+      name: lead.name || '',
+      phone: lead.phone || '',
+      email: lead.email || '',
+      source: lead.source || '',
+      followUpDate: lead.followUpDate || '',
+      followUpComment: '',
+    });
     setEditingLeadId(lead.id);
     setShowEditModal(true);
   };
@@ -240,6 +256,7 @@ const AdminCrmDashboard = () => {
     setShowAddModal(false);
     setShowEditModal(false);
     setEditingLeadId(null);
+    setLeadData({ name: '', phone: '', email: '', source: '', followUpDate: '', followUpComment: '' });
   };
 
   const handleLeadClick = (lead) => {
@@ -735,6 +752,39 @@ const AdminCrmDashboard = () => {
                   onChange={e => setLeadData({ ...leadData, source: e.target.value })}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
                   placeholder="e.g. Website, 2BHK"
+                />
+              </div>
+
+              {/* Follow-up Date + Comment — shown in both Add and Edit */}
+              <div className="pt-2 border-t border-gray-100">
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
+                  <Calendar size={14} className="text-primary-500" /> Follow-up Date
+                  <span className="text-gray-400 font-normal text-xs ml-1">(optional)</span>
+                </label>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="date"
+                    value={leadData.followUpDate}
+                    onChange={e => setLeadData({ ...leadData, followUpDate: e.target.value })}
+                    className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm"
+                  />
+                  {leadData.followUpDate && (
+                    <button
+                      type="button"
+                      onClick={() => setLeadData({ ...leadData, followUpDate: '', followUpComment: '' })}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Clear follow-up"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  value={leadData.followUpComment}
+                  onChange={e => setLeadData({ ...leadData, followUpComment: e.target.value })}
+                  placeholder="Add a comment — e.g. Client requested a site visit next week…"
+                  rows={2}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all text-sm resize-none placeholder-gray-400"
                 />
               </div>
 
