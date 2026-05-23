@@ -10,18 +10,25 @@ export const NotificationContext = createContext();
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
-  // Add a new notification
-  const showNotification = useCallback(({ type = 'info', message, duration = 5000 }) => {
+  // Add a new notification — accepts BOTH call styles:
+  //   showNotification('message', 'success')           ← positional (used throughout CRM)
+  //   showNotification({ message, type, duration })    ← object style (legacy)
+  const showNotification = useCallback((messageOrObj, typeArg = 'info', durationArg = 4000) => {
+    const isObj = typeof messageOrObj === 'object' && messageOrObj !== null;
+    const message = isObj ? messageOrObj.message : messageOrObj;
+    const type    = isObj ? (messageOrObj.type || 'info') : typeArg;
+    const duration = isObj ? (messageOrObj.duration || 4000) : durationArg;
+
+    if (!message) return;
+
     const id = uuidv4();
-    
-    // Add notification to array
+
     setNotifications(prev => [...prev, { id, type, message }]);
-    
-    // Remove notification after duration
+
     setTimeout(() => {
-      setNotifications(prev => prev.filter(notification => notification.id !== id));
+      setNotifications(prev => prev.filter(n => n.id !== id));
     }, duration);
-    
+
     return id;
   }, []);
 
@@ -32,7 +39,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Remove a specific notification
   const removeNotification = useCallback((id) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
 
   // Clear all notifications
@@ -40,14 +47,13 @@ export const NotificationProvider = ({ children }) => {
     setNotifications([]);
   }, []);
 
-  // Context value
   const value = {
     notifications,
     showNotification,
     removeNotification,
-    clearNotifications
+    clearNotifications,
   };
-  
+
   return (
     <NotificationContext.Provider value={value}>
       {children}
@@ -65,5 +71,4 @@ export const useNotification = () => {
   return context;
 };
 
-// For Fast Refresh compatibility, export NotificationContext as the default
-export default NotificationContext; 
+export default NotificationContext;

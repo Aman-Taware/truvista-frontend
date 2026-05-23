@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ChevronLeft, ChevronRight, Phone, MessageSquare, Calendar as CalendarIcon, Edit2, Check, X } from 'lucide-react';
-import { 
-  format, isSameDay, parseISO, startOfMonth, endOfMonth, 
-  startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, 
-  addMonths, subMonths, isToday 
+import { ChevronLeft, ChevronRight, Phone, MessageSquare, Calendar as CalendarIcon, MessageCircle } from 'lucide-react';
+import {
+  format, isSameDay, parseISO, startOfMonth, endOfMonth,
+  startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth,
+  addMonths, subMonths, isToday
 } from 'date-fns';
 import { NotificationContext } from '../../contexts/NotificationContext';
 import crmApi from '../../api/crmApi';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import { getStageConfig } from '../../utils/crmConstants';
+import LeadDetailDrawer from './LeadDetailDrawer';
+import { getStageConfig, PIPELINE_STAGES } from '../../utils/crmConstants';
 
 const ExecutiveCalendar = ({ isGlobalView = false }) => {
   const { showNotification } = useContext(NotificationContext);
-  
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [remarks, setRemarks] = useState([]);
   const [executives, setExecutives] = useState([]);
@@ -20,16 +21,14 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(new Date());
 
-  // Per-card inline follow-up editing state
-  const [editingFollowUp, setEditingFollowUp] = useState(null); // leadId
-  const [editDate, setEditDate] = useState('');
-  const [editComment, setEditComment] = useState('');
-  const [savingFollowUp, setSavingFollowUp] = useState(false);
+  // Drawer state — opens full LeadDetailDrawer for any calendar lead
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const monthEnd   = endOfMonth(monthStart);
+  const startDate  = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const endDate    = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
   useEffect(() => {
     if (isGlobalView) fetchExecutives();
@@ -52,8 +51,8 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
     try {
       setLoading(true);
       const formattedStart = format(startDate, 'yyyy-MM-dd');
-      const formattedEnd = format(endDate, 'yyyy-MM-dd');
-      
+      const formattedEnd   = format(endDate,   'yyyy-MM-dd');
+
       let data;
       if (isGlobalView) {
         data = await crmApi.getGlobalCalendarVisits(formattedStart, formattedEnd, selectedExecutive);
@@ -81,32 +80,53 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
     remarks.filter(r => r.followUpDate && isSameDay(parseISO(r.followUpDate), day));
   const selectedDayRemarks = getRemarksForDay(selectedDay);
 
-  const startEditFollowUp = (remark) => {
-    setEditingFollowUp(remark.leadId);
-    setEditDate(remark.followUpDate || '');
-    setEditComment('');
+  // Build a partial lead object from the LeadRemarkDTO and open the drawer
+  const openDrawerForRemark = (remark) => {
+    const partialLead = {
+      id:          remark.leadId,
+      name:        remark.leadName || 'Unknown',
+      phone:       remark.leadPhone || '',
+      email:       remark.leadEmail || '',
+      source:      remark.leadSource || '',
+      status:      remark.leadStatus || 'NEW',
+      followUpDate: remark.followUpDate || '',
+      assignedUserName: remark.leadAssignedUserName || '',
+      remarks:     [],   // full history not in calendar DTO; drawer will show empty log
+      visitedPropertyDetails: '',
+    };
+    setSelectedLead(partialLead);
+    setIsDrawerOpen(true);
   };
 
-  const cancelEditFollowUp = () => {
-    setEditingFollowUp(null);
-    setEditDate('');
-    setEditComment('');
+  const handleFollowUpChanged = (leadId, date) => {
+    // Update the remarks array so calendar dot/pill refreshes
+    setRemarks(prev =>
+      prev.map(r => r.leadId === leadId ? { ...r, followUpDate: date } : r)
+    );
+    // If the updated lead was on selectedDay, also update the partial lead in drawer
+    if (selectedLead?.id === leadId) {
+      setSelectedLead(prev => ({ ...prev, followUpDate: date }));
+    }
+    // Full refresh after a short delay (calendar data may have moved to a different day)
+    setTimeout(fetchVisits, 600);
   };
 
-  const saveFollowUp = async (leadId) => {
-    if (!editDate) return;
-    setSavingFollowUp(true);
+  const handleStatusChange = async (leadId, statusData) => {
     try {
-      await crmApi.updateFollowUpDate(leadId, editDate, editComment, isGlobalView);
-      showNotification('Follow-up date updated', 'success');
-      setEditingFollowUp(null);
-      setEditDate('');
-      setEditComment('');
-      fetchVisits(); // Refresh calendar
-    } catch (err) {
-      showNotification('Failed to update follow-up', 'error');
-    } finally {
-      setSavingFollowUp(false);
+      await crmApi.updateLeadStatus(leadId, statusData);
+      showNotification('Status updated', 'success');
+      const newStatus = typeof statusData === 'string' ? statusData : statusData.status;
+      setRemarks(prev => prev.map(r => r.leadId === leadId ? { ...r, leadStatus: newStatus } : r));
+      if (selectedLead?.id === leadId) setSelectedLead(prev => ({ ...prev, status: newStatus }));
+    } catch {
+      showNotification('Failed to update status', 'error');
+    }
+  };
+
+  const handleRemarkAdded = (leadId, newRemark) => {
+    // Nothing to do in calendar view — drawer shows local state only
+    if (selectedLead?.id === leadId) {
+      setSelectedLead(prev => ({ ...prev, remarks: [...(prev.remarks || []), newRemark] }));
     }
   };
 
@@ -159,7 +179,7 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
 
         {/* Days of week header */}
         <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+          {['S','M','T','W','T','F','S'].map((d, i) => (
             <div key={i} className="py-2 text-center text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
               {d}
             </div>
@@ -174,10 +194,10 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
         ) : (
           <div className="grid grid-cols-7 auto-rows-[minmax(56px,1fr)] sm:auto-rows-[minmax(90px,1fr)]">
             {daysInGrid.map((day, i) => {
-              const dayRemarks = getRemarksForDay(day);
+              const dayRemarks     = getRemarksForDay(day);
               const isCurrentMonth = isSameMonth(day, currentMonth);
-              const isDayToday = isToday(day);
-              const isSelected = isSameDay(day, selectedDay);
+              const isDayToday     = isToday(day);
+              const isSelected     = isSameDay(day, selectedDay);
 
               return (
                 <div
@@ -204,14 +224,19 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                           const cfg = getStageConfig(r.leadStatus);
                           return <span key={idx} className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />;
                         })}
-                        {dayRemarks.length > 3 && <span className="text-[8px] text-gray-400 font-bold leading-none ml-0.5">+{dayRemarks.length - 3}</span>}
+                        {dayRemarks.length > 3 && (
+                          <span className="text-[8px] text-gray-400 font-bold leading-none ml-0.5">+{dayRemarks.length - 3}</span>
+                        )}
                       </div>
                       {/* Desktop: event pills */}
                       <div className="hidden sm:block mt-1 space-y-1 overflow-hidden max-h-[60px]">
                         {dayRemarks.slice(0, 2).map((remark, idx) => {
                           const cfg = getStageConfig(remark.leadStatus);
                           return (
-                            <div key={idx} className={`px-1.5 py-1 text-[10px] rounded-md ${cfg.calBg} ${cfg.calText} border border-current/10 truncate font-medium flex items-center gap-1`}>
+                            <div
+                              key={idx}
+                              className={`px-1.5 py-1 text-[10px] rounded-md ${cfg.calBg} ${cfg.calText} border border-current/10 truncate font-medium flex items-center gap-1`}
+                            >
                               <span className={`w-1 h-1 rounded-full ${cfg.dot} shrink-0`} />
                               {remark.leadName}
                             </div>
@@ -242,7 +267,9 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
             </h3>
           </div>
           <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${
-            selectedDayRemarks.length > 0 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-500'
+            selectedDayRemarks.length > 0
+              ? 'bg-primary-100 text-primary-700'
+              : 'bg-gray-100 text-gray-500'
           }`}>
             {selectedDayRemarks.length} follow-up{selectedDayRemarks.length !== 1 && 's'}
           </span>
@@ -258,13 +285,18 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
           ) : (
             selectedDayRemarks.map((remark, i) => {
               const cfg = getStageConfig(remark.leadStatus);
-              const isEditingThis = editingFollowUp === remark.leadId;
               return (
-                <div key={i} className={`rounded-2xl p-4 border ${cfg.calBg} border-current/10`}>
+                <div
+                  key={i}
+                  onClick={() => openDrawerForRemark(remark)}
+                  className={`rounded-2xl p-4 border ${cfg.calBg} border-current/10 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all`}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badgeStyle}`}>{cfg.title}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.badgeStyle}`}>
+                          {cfg.title}
+                        </span>
                       </div>
                       <h4 className="font-bold text-gray-800 text-sm">{remark.leadName || 'Unknown Lead'}</h4>
                       {isGlobalView && remark.leadAssignedUserName && (
@@ -272,59 +304,27 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
                           Assigned to: {remark.leadAssignedUserName}
                         </p>
                       )}
-
-                      {/* FIX #2: Inline follow-up date editor */}
-                      {isEditingThis ? (
-                        <div className="mt-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="date"
-                              value={editDate}
-                              onChange={(e) => setEditDate(e.target.value)}
-                              className="flex-1 border border-primary-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white"
-                            />
-                            <button
-                              onClick={() => saveFollowUp(remark.leadId)}
-                              disabled={savingFollowUp || !editDate}
-                              className="w-8 h-8 bg-green-600 text-white rounded-xl flex items-center justify-center hover:bg-green-700 disabled:opacity-50"
-                            >
-                              {savingFollowUp ? <LoadingSpinner size="sm" color="white" /> : <Check size={13} />}
-                            </button>
-                            <button
-                              onClick={cancelEditFollowUp}
-                              className="w-8 h-8 bg-gray-200 text-gray-600 rounded-xl flex items-center justify-center hover:bg-gray-300"
-                            >
-                              <X size={13} />
-                            </button>
-                          </div>
-                          {/* Comment field */}
-                          <textarea
-                            value={editComment}
-                            onChange={(e) => setEditComment(e.target.value)}
-                            placeholder="Add a comment (optional) — e.g. Client asked to reschedule…"
-                            rows={2}
-                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-primary-400 bg-white placeholder-gray-400"
-                          />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => startEditFollowUp(remark)}
-                          className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 hover:text-primary-800 bg-white/70 hover:bg-white px-2.5 py-1.5 rounded-lg transition-colors border border-primary-200/50"
-                        >
-                          <Edit2 size={11} />
-                          Move Follow-up Date
-                        </button>
-                      )}
+                      <p className="text-[11px] text-gray-500 mt-1.5 flex items-center gap-1">
+                        <MessageSquare size={10} />
+                        Tap to open lead details &amp; update follow-up
+                      </p>
                     </div>
 
                     {remark.leadPhone && (
-                      <div className="flex gap-1.5 shrink-0">
-                        <a href={`tel:${remark.leadPhone}`} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl">
+                      <div className="flex gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                        <a
+                          href={`tel:${remark.leadPhone}`}
+                          className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-xl"
+                        >
                           <Phone size={14} />
                         </a>
-                        <a href={`https://wa.me/${remark.leadPhone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
-                          className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded-xl">
-                          <MessageSquare size={14} />
+                        <a
+                          href={`https://wa.me/${remark.leadPhone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded-xl"
+                        >
+                          <MessageCircle size={14} />
                         </a>
                       </div>
                     )}
@@ -335,6 +335,18 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
           )}
         </div>
       </div>
+
+      {/* LeadDetailDrawer — same popup used everywhere else in the CRM */}
+      <LeadDetailDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        lead={selectedLead}
+        onStatusChange={handleStatusChange}
+        onRemarkAdded={handleRemarkAdded}
+        onFollowUpChanged={handleFollowUpChanged}
+        pipelineStages={PIPELINE_STAGES}
+        isAdmin={isGlobalView}
+      />
     </div>
   );
 };

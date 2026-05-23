@@ -76,8 +76,9 @@ const crmApi = {
     return await api.put(`/api/executive/crm/leads/${leadId}/status`, payload, { _skipDuplicate: true });
   },
 
-  addLeadRemark: async (leadId, remarkData) => {
-    return await api.post(`/api/executive/crm/leads/${leadId}/remarks`, remarkData, { _skipDuplicate: true });
+  addLeadRemark: async (leadId, remarkData, isAdmin = false) => {
+    const base = isAdmin ? '/api/admin/crm/leads' : '/api/executive/crm/leads';
+    return await api.post(`${base}/${leadId}/remarks`, remarkData, { _skipDuplicate: true });
   },
 
   updateFollowUpDate: async (leadId, followUpDate, remarkText, isAdmin = false) => {

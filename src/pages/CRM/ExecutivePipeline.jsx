@@ -254,6 +254,10 @@ const ExecutivePipeline = ({ isGlobalView = false }) => {
         lead={selectedLead}
         onStatusChange={handleStatusChange}
         onRemarkAdded={handleRemarkAdded}
+        onFollowUpChanged={(leadId, date) => {
+          setLeads(prev => prev.map(l => l.id === leadId ? { ...l, followUpDate: date } : l));
+          if (selectedLead?.id === leadId) setSelectedLead(prev => ({ ...prev, followUpDate: date }));
+        }}
         pipelineStages={PIPELINE_STAGES}
       />
     </div>

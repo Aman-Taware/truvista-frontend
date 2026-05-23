@@ -364,7 +364,7 @@ const AdminCrmDashboard = () => {
               </div>
               <div className="flex items-center gap-3">
                 <select
-                  onChange={(e) => handleBulkAssign(e.target.value === 'unassign' ? null : e.target.value)}
+                  onChange={(e) => handleBulkAssign(e.target.value === 'unassign' ? null : Number(e.target.value))}
                   value=""
                   disabled={bulkAssigning}
                   className="px-3 py-1.5 border border-primary-200 rounded-lg text-sm bg-white text-primary-800 outline-none focus:ring-2 focus:ring-primary-500/30 font-medium"
@@ -817,7 +817,12 @@ const AdminCrmDashboard = () => {
         lead={selectedLead}
         onStatusChange={handleStatusChange}
         onRemarkAdded={handleRemarkAdded}
+        onFollowUpChanged={(leadId, date) => {
+          setLeads(prev => prev.map(l => l.id === leadId ? { ...l, followUpDate: date } : l));
+          if (selectedLead?.id === leadId) setSelectedLead(prev => ({ ...prev, followUpDate: date }));
+        }}
         pipelineStages={PIPELINE_STAGES}
+        isAdmin
       />
     </div>
   );
