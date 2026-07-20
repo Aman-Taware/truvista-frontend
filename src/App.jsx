@@ -38,7 +38,7 @@ import CreateProperty from './pages/Admin/CreateProperty';
 import EditProperty from './pages/Admin/EditProperty';
 import PropertyMediaManagement from './pages/Admin/PropertyMediaManagement';
 import LandmarkManager from './pages/Admin/LandmarkManager';
-import TourEditor from './pages/admin/TourEditor';
+import TourEditor from './pages/Admin/TourEditor';
 
 // CRM Pages
 import AdminCrmDashboard from './pages/CRM/AdminCrmDashboard';
