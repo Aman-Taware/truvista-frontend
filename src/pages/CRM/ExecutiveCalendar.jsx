@@ -111,9 +111,9 @@ const ExecutiveCalendar = ({ isGlobalView = false }) => {
     setTimeout(fetchVisits, 600);
   };
 
-  const handleStatusChange = async (leadId, statusData) => {
+  const handleStatusChange = async (leadId, statusData, isAdmin = false) => {
     try {
-      await crmApi.updateLeadStatus(leadId, statusData);
+      await crmApi.updateLeadStatus(leadId, statusData, isAdmin);
       showNotification('Status updated', 'success');
       const newStatus = typeof statusData === 'string' ? statusData : statusData.status;
       setRemarks(prev => prev.map(r => r.leadId === leadId ? { ...r, leadStatus: newStatus } : r));

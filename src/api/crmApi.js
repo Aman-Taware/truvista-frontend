@@ -47,6 +47,10 @@ const crmApi = {
     return await api.post('/api/admin/crm/leads/bulk-assign', { leadIds, executiveId }, { _skipDuplicate: true });
   },
 
+  bulkDeleteLeads: async (leadIds) => {
+    return await api.post('/api/admin/crm/leads/bulk-delete', { leadIds }, { _skipDuplicate: true });
+  },
+
   getExecutives: async () => {
     const page = await api.get('/api/admin/users', { params: { size: 200 }, _skipDuplicate: true });
     const allUsers = page?.content || [];
@@ -71,9 +75,10 @@ const crmApi = {
     return await api.get('/api/executive/crm/leads', { params, _skipDuplicate: true });
   },
 
-  updateLeadStatus: async (leadId, statusData) => {
+  updateLeadStatus: async (leadId, statusData, isAdmin = false) => {
     const payload = typeof statusData === 'string' ? { status: statusData } : statusData;
-    return await api.put(`/api/executive/crm/leads/${leadId}/status`, payload, { _skipDuplicate: true });
+    const base = isAdmin ? '/api/admin/crm/leads' : '/api/executive/crm/leads';
+    return await api.put(`${base}/${leadId}/status`, payload, { _skipDuplicate: true });
   },
 
   addLeadRemark: async (leadId, remarkData, isAdmin = false) => {

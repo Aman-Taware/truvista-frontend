@@ -38,6 +38,7 @@ import CreateProperty from './pages/Admin/CreateProperty';
 import EditProperty from './pages/Admin/EditProperty';
 import PropertyMediaManagement from './pages/Admin/PropertyMediaManagement';
 import LandmarkManager from './pages/Admin/LandmarkManager';
+import TourEditor from './pages/admin/TourEditor';
 
 // CRM Pages
 import AdminCrmDashboard from './pages/CRM/AdminCrmDashboard';
@@ -125,6 +126,7 @@ const App = () => {
               <Route path="properties/create" element={<CreateProperty />} />
               <Route path="properties/:id/media" element={<PropertyMediaManagement />} />
               <Route path="properties/:id/landmarks" element={<LandmarkManager />} />
+              <Route path="properties/:id/tour" element={<TourEditor />} />
               <Route path="properties/new" element={<NotFound />} />
               <Route path="properties/:id" element={<EditProperty />} />
               <Route path="properties/:id/edit" element={<EditProperty />} />

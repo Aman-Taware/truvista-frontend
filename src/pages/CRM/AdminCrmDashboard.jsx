@@ -29,6 +29,8 @@ const AdminCrmDashboard = () => {
   // Bulk Actions
   const [selectedLeads, setSelectedLeads] = useState([]);
   const [bulkAssigning, setBulkAssigning] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   // Manual Lead Creation & Edit State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -146,7 +148,7 @@ const AdminCrmDashboard = () => {
     setBulkAssigning(true);
     try {
       await crmApi.bulkAssignLeads(selectedLeads, executiveId);
-      showNotification(`Successfully updated ${selectedLeads.length} leads`, 'success');
+      showNotification(`Successfully assigned ${selectedLeads.length} leads`, 'success');
       setSelectedLeads([]);
       fetchStats();
       fetchLeads(currentPage);
@@ -154,6 +156,23 @@ const AdminCrmDashboard = () => {
       showNotification('Failed to bulk assign leads', 'error');
     } finally {
       setBulkAssigning(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedLeads.length === 0) return;
+    setBulkDeleting(true);
+    setShowBulkDeleteConfirm(false);
+    try {
+      await crmApi.bulkDeleteLeads(selectedLeads);
+      showNotification(`Deleted ${selectedLeads.length} leads`, 'success');
+      setSelectedLeads([]);
+      fetchStats();
+      fetchLeads(currentPage);
+    } catch (err) {
+      showNotification('Failed to delete leads', 'error');
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -264,9 +283,9 @@ const AdminCrmDashboard = () => {
     setIsDrawerOpen(true);
   };
 
-  const handleStatusChange = async (leadId, statusData) => {
+  const handleStatusChange = async (leadId, statusData, isAdmin = true) => {
     try {
-      await crmApi.updateLeadStatus(leadId, statusData);
+      await crmApi.updateLeadStatus(leadId, statusData, isAdmin);
       showNotification('Status updated', 'success');
       fetchLeads(currentPage);
       fetchStats();
@@ -362,19 +381,31 @@ const AdminCrmDashboard = () => {
                 <span className="bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-md">{selectedLeads.length}</span>
                 <span className="text-sm font-semibold text-primary-900">Leads Selected</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {/* Bulk Assign */}
                 <select
                   onChange={(e) => handleBulkAssign(e.target.value === 'unassign' ? null : Number(e.target.value))}
                   value=""
-                  disabled={bulkAssigning}
+                  disabled={bulkAssigning || bulkDeleting}
                   className="px-3 py-1.5 border border-primary-200 rounded-lg text-sm bg-white text-primary-800 outline-none focus:ring-2 focus:ring-primary-500/30 font-medium"
                 >
-                  <option value="" disabled>— Bulk Action —</option>
-                  <option value="unassign">⚠️ Unassign Selected</option>
+                  <option value="" disabled>— Assign To —</option>
+                  <option value="unassign">⚠️ Unassign</option>
                   {executives.map(exec => (
-                    <option key={exec.id} value={exec.id}>Assign to: {exec.name}</option>
+                    <option key={exec.id} value={exec.id}>{exec.name}</option>
                   ))}
                 </select>
+                {/* Bulk Delete */}
+                <button
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                  disabled={bulkDeleting || bulkAssigning}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  {bulkDeleting
+                    ? <LoadingSpinner size="sm" color="white" />
+                    : <Trash2 size={14} />}
+                  Delete
+                </button>
                 <button
                   onClick={() => setSelectedLeads([])}
                   className="p-1.5 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
@@ -806,6 +837,39 @@ const AdminCrmDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="px-6 pt-6 pb-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                  <Trash2 size={20} className="text-red-500" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-gray-800">Delete {selectedLeads.length} Lead{selectedLeads.length !== 1 ? 's' : ''}?</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 size={16} /> Delete All
+              </button>
+            </div>
           </div>
         </div>
       )}

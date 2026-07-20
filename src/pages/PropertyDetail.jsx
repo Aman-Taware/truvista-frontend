@@ -15,6 +15,7 @@ import StickyFooter from '../components/property/detail/StickyFooter';
 import propertyApi from '../api/propertyApi';
 import { getImageUrl } from '../utils/media';
 import PropertyLocation from '../components/property/detail/PropertyLocation';
+import VirtualTourButton from '../components/property/detail/VirtualTourButton';
 
 /**
  * Property Detail Page - Royal & Elegant Design with Compact Layout
@@ -282,6 +283,7 @@ const PropertyDetail = () => {
 
         {/* Action Buttons - Fixed alignment issues */}
         <div className="mb-3 grid grid-cols-2 md:grid-cols-4 gap-1.5">
+          <VirtualTourButton propertyId={property.id} />
           {brochureMedia && getImageUrl(brochureMedia) && (
             <Button
               variant="outline"

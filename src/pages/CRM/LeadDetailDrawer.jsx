@@ -49,7 +49,7 @@ const LeadDetailDrawer = ({
       setVisitedDetails(lead.visitedPropertyDetails || '');
       setNewComment('');
     }
-  }, [lead?.id]);
+  }, [lead?.id, lead?.status, lead?.followUpDate, lead?.visitedPropertyDetails]);  // re-sync if lead fields change from parent
 
   // ── Keyboard & scroll lock ────────────────────────────────────────────────
   useEffect(() => {
@@ -73,11 +73,16 @@ const LeadDetailDrawer = ({
 
   /** Save status — only fires when user explicitly clicks "Save Status" */
   const handleSaveStatus = async () => {
+    const statusToSave = pendingStatus;
     setSavingStatus(true);
     try {
-      await onStatusChange(lead.id, pendingStatus);
+      await onStatusChange(lead.id, statusToSave, isAdmin);
       // onStatusChange already shows notification + updates parent state
+      // Set pendingStatus to the confirmed value so it stays in sync
+      setPendingStatus(statusToSave);
     } catch {
+      // Revert local state to the last known-good status from the lead
+      setPendingStatus(lead.status || '');
       showNotification('Failed to update status', 'error');
     } finally {
       setSavingStatus(false);
@@ -152,7 +157,7 @@ const LeadDetailDrawer = ({
       await onStatusChange(lead.id, {
         status: 'VISIT_DONE',
         visitedPropertyDetails: visitedDetails,
-      });
+      }, isAdmin);
       showNotification('Property details saved', 'success');
     } catch {
       showNotification('Failed to save details', 'error');

@@ -63,9 +63,9 @@ const ExecutivePipeline = ({ isGlobalView = false }) => {
     setIsDrawerOpen(true);
   };
 
-  const handleStatusChange = async (leadId, statusData) => {
+  const handleStatusChange = async (leadId, statusData, isAdmin = false) => {
     try {
-      await crmApi.updateLeadStatus(leadId, statusData);
+      await crmApi.updateLeadStatus(leadId, statusData, isAdmin);
       showNotification('Status updated', 'success');
       const newStatus = typeof statusData === 'string' ? statusData : statusData.status;
       const newDetails = typeof statusData === 'object' ? statusData.visitedPropertyDetails : undefined;
@@ -259,6 +259,7 @@ const ExecutivePipeline = ({ isGlobalView = false }) => {
           if (selectedLead?.id === leadId) setSelectedLead(prev => ({ ...prev, followUpDate: date }));
         }}
         pipelineStages={PIPELINE_STAGES}
+        isAdmin={isGlobalView}
       />
     </div>
   );
