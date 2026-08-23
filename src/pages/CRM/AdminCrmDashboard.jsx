@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
-  UploadCloud, Users, CheckCircle, AlertCircle,
+  UploadCloud, Users, AlertCircle,
   UserCheck, Eye, Search, ChevronDown, Plus, X, Edit, Trash2, Phone, MessageCircle, Download, Calendar
 } from 'lucide-react';
 import { NotificationContext } from '../../contexts/NotificationContext';
@@ -359,15 +359,15 @@ const AdminCrmDashboard = () => {
         <StatCard title="Total Leads" value={stats?.totalLeads} icon={Users} bg="bg-blue-50" fg="text-blue-600" loading={loadingStats} />
         <StatCard title="Assigned" value={stats?.assignedLeads} icon={UserCheck} bg="bg-indigo-50" fg="text-indigo-600" loading={loadingStats} />
         <StatCard title="Site Visits Done" value={stats?.visitDoneLeads} icon={Eye} bg="bg-teal-50" fg="text-teal-600" loading={loadingStats} />
-        <StatCard title="Conversions (Won)" value={stats?.wonLeads} icon={CheckCircle} bg="bg-green-50" fg="text-green-600" loading={loadingStats} />
+        <StatCard title="Visits Planned" value={stats?.visitPlannedLeads} icon={Calendar} bg="bg-yellow-50" fg="text-yellow-600" loading={loadingStats} />
       </div>
 
       {/* Secondary mini-stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <MiniStat label="New" value={stats?.newLeads} color="text-blue-500" loading={loadingStats} />
+        <MiniStat label="Contacted" value={stats?.contactedLeads} color="text-yellow-600" loading={loadingStats} />
         <MiniStat label="Unassigned" value={stats?.unassignedLeads} color="text-orange-500" loading={loadingStats} />
-        <MiniStat label="Interested" value={stats?.interestedLeads} color="text-purple-500" loading={loadingStats} />
         <MiniStat label="Visit Planned" value={stats?.visitPlannedLeads} color="text-indigo-500" loading={loadingStats} />
-        <MiniStat label="Lost" value={stats?.lostLeads} color="text-red-500" loading={loadingStats} />
       </div>
 
       {/* Leads Table */}
@@ -439,13 +439,8 @@ const AdminCrmDashboard = () => {
                     <option value="">All Statuses</option>
                     <option value="NEW">New</option>
                     <option value="CONTACTED">Contacted</option>
-                    <option value="INTERESTED">Interested</option>
-                    <option value="NOT_INTERESTED">Not Interested</option>
                     <option value="VISIT_PLANNED">Visit Planned</option>
                     <option value="VISIT_DONE">Visit Done</option>
-                    <option value="NEGOTIATION">Negotiation</option>
-                    <option value="WON">Won</option>
-                    <option value="LOST">Lost</option>
                   </select>
                   <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
